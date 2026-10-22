@@ -1,0 +1,21 @@
+{
+  "name": "Shin - Học tiếng Anh",
+  "short_name": "Shin",
+  "description": "Ứng dụng học tiếng Anh cá nhân, hỗ trợ học ngoại tuyến.",
+  "lang": "vi",
+  "dir": "ltr",
+  "start_url": "./index.html#home",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff8fb",
+  "theme_color": "#d78ca6",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "assets/icons/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

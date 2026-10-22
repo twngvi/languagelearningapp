@@ -4,6 +4,7 @@ export function renderSettings() {
     <section class="settings-card">
       <div class="section-heading"><div><p class="eyebrow">ỨNG DỤNG CÁ NHÂN</p><h2>Lưu nội bộ trên thiết bị</h2><p class="header-subtitle">Dữ liệu của bạn được lưu trong trình duyệt, không cần tài khoản và không gửi lên máy chủ.</p></div><span class="status-pill">Ngoại tuyến</span></div>
       <p class="form-help">Bạn có thể cài Shin như một ứng dụng từ menu của Chrome hoặc Edge. Khi dùng trên thiết bị khác, hãy xuất tệp JSON ở bên dưới rồi nhập lại trên thiết bị đó.</p>
+      <p class="notice" data-database-status role="status" aria-live="polite">Đang kiểm tra bộ nhớ nội bộ...</p>
     </section>
     <section class="settings-card" data-backup-panel>
       <div class="section-heading"><div><p class="eyebrow">DỮ LIỆU</p><h2>Sao lưu và khôi phục</h2><p class="header-subtitle">Chuyển dữ liệu học tập giữa các thiết bị bằng tệp JSON.</p></div></div>

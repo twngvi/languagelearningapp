@@ -1,5 +1,5 @@
 import { Router } from './router.js';
-import { openDatabase } from './db.js';
+import { getDatabaseHealth, openDatabase, protectDatabaseStorage } from './db.js';
 import { renderHome } from '../pages/home.js';
 import { renderVocabulary } from '../pages/vocabulary-page.js';
 import { renderStudy } from '../pages/study-page.js';
@@ -97,8 +97,13 @@ async function initializeHomePage() {
 router.start();
 
 openDatabase()
-  .then(() => {
+  .then(async () => {
     document.documentElement.dataset.databaseStatus = 'ready';
+    const storage = await protectDatabaseStorage();
+    document.documentElement.dataset.databasePersistence = storage.persisted ? 'protected' : 'browser-managed';
+    if (!storage.persisted) {
+      console.info('IndexedDB is available, but browser-managed storage protection is active.');
+    }
   })
   .catch((error) => {
     document.documentElement.dataset.databaseStatus = 'error';

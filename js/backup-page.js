@@ -1,4 +1,5 @@
 import { backupSummary, exportJson, exportVocabularyCsv, importBackup, readBackupFile } from './backup.js';
+import { getDatabaseHealth } from './db.js';
 import { showConfirm } from './notifications.js';
 
 export function initializeBackupPage() {
@@ -8,7 +9,20 @@ export function initializeBackupPage() {
   const message = view.querySelector('[data-backup-message]');
   const mergeButton = view.querySelector('[data-backup-action="import-merge"]');
   const replaceButton = view.querySelector('[data-backup-action="import-replace"]');
+  const databaseStatus = view.querySelector('[data-database-status]');
   let backup = null;
+
+  getDatabaseHealth()
+    .then(({ version, counts }) => {
+      const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      databaseStatus.textContent = `Database nội bộ đang hoạt động · phiên bản ${version} · ${total} bản ghi trên thiết bị này.`;
+      databaseStatus.className = 'notice success';
+    })
+    .catch((error) => {
+      console.error('Không thể kiểm tra database nội bộ:', error);
+      databaseStatus.textContent = `Không thể kiểm tra database nội bộ: ${error.message}`;
+      databaseStatus.className = 'notice error';
+    });
 
   const showMessage = (text, type = 'success') => {
     message.textContent = text;

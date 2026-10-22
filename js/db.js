@@ -95,6 +95,46 @@ export function openDatabase() {
   return databasePromise;
 }
 
+export async function getDatabaseHealth() {
+  const database = await openDatabase();
+  const counts = {};
+
+  for (const storeName of Object.values(STORES)) {
+    if (!database.objectStoreNames.contains(storeName)) {
+      throw new Error(`IndexedDB is missing the "${storeName}" store.`);
+    }
+
+    const request = database.transaction(storeName, 'readonly').objectStore(storeName).count();
+    counts[storeName] = await requestResult(request);
+  }
+
+  return {
+    name: database.name,
+    version: database.version,
+    counts,
+  };
+}
+
+export async function protectDatabaseStorage() {
+  if (!navigator.storage) {
+    return { supported: false, persisted: false };
+  }
+
+  const persisted = await navigator.storage.persisted();
+  if (persisted) {
+    return { supported: true, persisted: true };
+  }
+
+  if (typeof navigator.storage.persist !== 'function') {
+    return { supported: true, persisted: false };
+  }
+
+  return {
+    supported: true,
+    persisted: await navigator.storage.persist(),
+  };
+}
+
 export async function addRecord(storeName, record) {
   validateStoreName(storeName);
   if (!record || typeof record !== 'object') {

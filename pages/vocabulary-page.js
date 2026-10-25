@@ -7,7 +7,7 @@ function escapeHtml(value) {
 export function renderVocabulary() {
   return `
     <header class="page-header">
-      <div><p class="eyebrow">KHO TỪ VỰNG</p><h1>Từ vựng</h1><p class="header-subtitle">Quản lý và ôn tập những từ bạn muốn ghi nhớ.</p></div>
+      <div><p class="eyebrow">KHO TỪ VỰNG</p><h1>Từ vựng</h1></div>
       <div class="header-actions"><button class="secondary-button" data-vocabulary-action="bulk" type="button">Nhập hàng loạt</button><button class="secondary-button" data-vocabulary-action="sets" type="button">Quản lý bộ từ</button><button class="primary-button" data-vocabulary-action="new" type="button">+ Thêm từ</button></div>
     </header>
     <section class="vocabulary-toolbar" aria-label="Tìm kiếm và lọc từ vựng">

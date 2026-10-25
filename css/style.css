@@ -69,12 +69,12 @@ a {
 
 .sidebar-toggle {
   position: absolute;
-  top: 28px;
-  right: -13px;
-  z-index: 2;
+  top: 82px;
+  right: -16px;
+  z-index: 20;
   display: grid;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   place-items: center;
   color: var(--primary);
@@ -286,12 +286,6 @@ h2 {
   letter-spacing: -0.025em;
 }
 
-.header-subtitle {
-  margin-bottom: 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-
 .icon-button,
 .close-button {
   border: 0;
@@ -299,12 +293,45 @@ h2 {
 }
 
 .icon-button {
+  position: relative;
+  display: grid;
   width: 40px;
   height: 40px;
+  place-items: center;
   border: 1px solid var(--line);
   border-radius: 12px;
   color: var(--muted);
-  font-size: 22px;
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgba(150, 91, 117, 0.08);
+  transition: color 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.icon-button:hover {
+  color: var(--primary);
+  border-color: #eab6c8;
+  box-shadow: 0 8px 18px rgba(150, 91, 117, 0.14);
+  transform: translateY(-1px);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.icon-button-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
 }
 
 .notice,
@@ -730,10 +757,6 @@ h2 {
   margin-bottom: 6px;
 }
 
-.settings-card .header-subtitle {
-  max-width: 680px;
-}
-
 .settings-card .form-help {
   margin: 0 0 18px;
   line-height: 1.7;
@@ -775,6 +798,51 @@ h2 {
 .sync-login-form .primary-button {
   min-height: 42px;
   white-space: nowrap;
+}
+
+.speech-preferences {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 18px;
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.speech-preferences label {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.speech-preferences select,
+.speech-preferences input[type="range"] {
+  width: 100%;
+}
+
+.speech-preferences select {
+  min-height: 42px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.speech-preferences input[type="range"] {
+  accent-color: var(--primary);
+}
+
+.speech-preferences output {
+  margin-left: 6px;
+  color: var(--primary-dark);
+  font-weight: 700;
 }
 
 .backup-actions {
@@ -1945,6 +2013,15 @@ button:disabled {
     width: 100%;
   }
 
+  .speech-preferences {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .speech-preferences .secondary-button {
+    width: 100%;
+  }
+
   .page-header {
     align-items: flex-start;
     flex-direction: column;
@@ -2099,10 +2176,6 @@ button:disabled {
 }
 
 @media (max-width: 420px) {
-  .header-subtitle {
-    max-width: 250px;
-  }
-
   .vocabulary-card {
     align-items: flex-start;
     flex-direction: column;

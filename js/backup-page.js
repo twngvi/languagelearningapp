@@ -1,5 +1,6 @@
 import { backupSummary, exportJson, exportVocabularyCsv, importBackup, readBackupFile } from './backup.js';
 import { getDatabaseHealth } from './db.js';
+import { getSpeechPreferences, getVoices, saveSpeechPreferences, speakText, populateVoiceSelect } from './speech.js';
 import { showConfirm } from './notifications.js';
 
 export function initializeBackupPage() {
@@ -30,6 +31,39 @@ export function initializeBackupPage() {
     syncMessage.textContent = text;
     syncMessage.className = `notice ${type}`;
   };
+
+  const speechVoice = view.querySelector('[data-speech-voice]');
+  const speechRate = view.querySelector('[data-speech-rate]');
+  const speechRateValue = view.querySelector('[data-speech-rate-value]');
+  const speechPreferences = getSpeechPreferences();
+  populateVoiceSelect(speechVoice);
+  speechVoice.value = speechPreferences.voiceName;
+  speechRate.value = speechPreferences.rate;
+  speechRateValue.value = `${Number(speechRate.value).toFixed(1)}x`;
+  speechRate.addEventListener('input', () => {
+    speechRateValue.value = `${Number(speechRate.value).toFixed(1)}x`;
+    saveSpeechPreferences({ voiceName: speechVoice.value, rate: speechRate.value });
+  });
+  speechVoice.addEventListener('change', () => {
+    saveSpeechPreferences({ voiceName: speechVoice.value, rate: speechRate.value });
+  });
+  view.querySelector('[data-speech-action="preview"]').addEventListener('click', () => {
+    try {
+      speakText('Hello, this is your selected voice.', {
+        voiceName: speechVoice.value,
+        rate: speechRate.value,
+        lang: 'en-US',
+      });
+    } catch (error) {
+      showSyncMessage(error.message, 'error');
+    }
+  });
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      populateVoiceSelect(speechVoice);
+      speechVoice.value = getSpeechPreferences().voiceName;
+    });
+  }
 
   const renderAccount = async () => {
     const { getCurrentUser, syncAllLocalData } = await loadCloud();

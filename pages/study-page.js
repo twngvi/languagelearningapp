@@ -6,7 +6,7 @@ function escapeHtml(value) {
 
 export function renderStudy() {
   return `
-    <header class="page-header"><div><p class="eyebrow">LUYỆN TẬP</p><h1>Kiểm tra từ vựng</h1><p class="header-subtitle">Chọn một chế độ để luyện nhận diện, viết và dùng từ.</p></div></header>
+    <header class="page-header"><div><p class="eyebrow">LUYỆN TẬP</p><h1>Kiểm tra từ vựng</h1></div></header>
     <section class="study-setup" data-study-setup>
       <div class="section-heading"><div><p class="eyebrow">BẮT ĐẦU PHIÊN HỌC</p><h2>Chọn cách học</h2></div></div>
       <div class="study-modes" role="tablist" aria-label="Chế độ luyện tập">

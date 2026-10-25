@@ -68,30 +68,18 @@ a {
 }
 
 .sidebar-toggle {
-  position: absolute;
-  top: 82px;
-  right: -16px;
-  z-index: 20;
-  display: grid;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  place-items: center;
-  color: var(--primary);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(150, 91, 117, 0.12);
+  width: 100%;
+  margin-top: 8px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  text-align: left;
 }
 
 .sidebar-toggle svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
+  width: 18px;
+  height: 18px;
   transition: transform 180ms ease;
 }
 

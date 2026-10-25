@@ -8,9 +8,8 @@ export function renderSettings() {
     </section>
     <section class="settings-card" data-sync-panel>
       <div class="section-heading"><div><p class="eyebrow">ĐỒNG BỘ THIẾT BỊ</p><h2>Supabase</h2><p class="header-subtitle">Đăng nhập bằng email để dùng chung dữ liệu trên máy tính và điện thoại.</p></div><span class="status-pill" data-sync-status>Chưa đăng nhập</span></div>
-      <form data-sync-login-form class="backup-import">
-        <label class="field-label" for="sync-email">Email dùng chung</label>
-        <input id="sync-email" name="email" type="email" autocomplete="email" placeholder="ban@example.com" required>
+      <form data-sync-login-form class="sync-login-form">
+        <label class="sync-email-field" for="sync-email"><span>Email dùng chung</span><input id="sync-email" name="email" type="email" autocomplete="email" placeholder="ban@example.com" required></label>
         <button class="primary-button" type="submit">Gửi link đăng nhập</button>
       </form>
       <div class="backup-actions" data-sync-account hidden>

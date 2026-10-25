@@ -573,6 +573,12 @@ h2 {
   display: grid;
   gap: 9px;
   margin-top: 12px;
+  padding: 12px 14px;
+  color: var(--muted);
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 12px;
 }
 
 .answer-option {
@@ -1511,6 +1517,18 @@ button:disabled {
 
 .lookup-result:empty {
   display: none;
+}
+
+.lookup-result.is-success {
+  color: #328962;
+  background: #f2fcf6;
+  border-left-color: #62b88a;
+}
+
+.lookup-result.is-error {
+  color: #bd4f5d;
+  background: #fff4f4;
+  border-left-color: #bd4f5d;
 }
 
 .lookup-result strong,

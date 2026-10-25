@@ -1,4 +1,4 @@
-const CACHE_NAME = 'personal-language-app-core-v16';
+const CACHE_NAME = 'personal-language-app-core-v17';
 const CORE_ASSETS = [
   './',
   './index.html',

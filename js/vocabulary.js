@@ -205,18 +205,36 @@ export async function initializeVocabularyPage() {
         speakText(record.word, { rate: 1 });
       }
       if (action === 'lookup') {
-        lookupController?.abort();
-        lookupController = new AbortController();
-        const result = await lookupEnglishWord(form.querySelector('[name="word"]').value, lookupController.signal);
-        form.querySelector('[name="pronunciation"]').value = result.pronunciation;
-        form.querySelector('[name="example"]').value ||= result.example;
-        view.querySelector('[data-lookup-result]').innerHTML = `<strong>Kết quả tham khảo (English)</strong><p>${result.definitions.map((item) => item.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]))).join('<br>') || 'Không có định nghĩa hiển thị.'}</p><a href="${result.source}" target="_blank" rel="noreferrer">Xem nguồn từ điển ↗</a>`;
+        const lookupResult = view.querySelector('[data-lookup-result]');
+        try {
+          lookupController?.abort();
+          lookupController = new AbortController();
+          const result = await lookupEnglishWord(form.querySelector('[name="word"]').value, lookupController.signal);
+          form.querySelector('[name="pronunciation"]').value = result.pronunciation;
+          form.querySelector('[name="example"]').value ||= result.example;
+          lookupResult.className = 'lookup-result is-success';
+          lookupResult.innerHTML = `<strong>Kết quả tham khảo (English)</strong><p>${result.definitions.map((item) => item.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character]))).join('<br>') || 'Không có định nghĩa hiển thị.'}</p><a href="${result.source}" target="_blank" rel="noreferrer">Xem nguồn từ điển ↗</a>`;
+        } catch (error) {
+          if (error.name === 'AbortError') return;
+          console.error('Không thể tra cứu từ vựng:', error);
+          lookupResult.className = 'lookup-result is-error';
+          lookupResult.textContent = `Chưa tra được nghĩa lúc này: ${error.message}`;
+        }
+        return;
       }
       if (action === 'speak-form') {
-        speakText(form.querySelector('[name="word"]').value, {
-          voiceName: form.querySelector('[name="voice"]').value,
-          rate: form.querySelector('[name="rate"]').value,
-        });
+        try {
+          speakText(form.querySelector('[name="word"]').value, {
+            voiceName: form.querySelector('[name="voice"]').value,
+            rate: form.querySelector('[name="rate"]').value,
+          });
+        } catch (error) {
+          console.error('Không thể phát âm từ vựng:', error);
+          const lookupResult = view.querySelector('[data-lookup-result]');
+          lookupResult.className = 'lookup-result is-error';
+          lookupResult.textContent = `Chưa thể phát âm: ${error.message}`;
+        }
+        return;
       }
       if (action === 'bulk') bulkForm.hidden = false;
       if (action === 'sets') setForm.hidden = false;

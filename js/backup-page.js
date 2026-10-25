@@ -36,6 +36,8 @@ export function initializeBackupPage() {
     const user = await getCurrentUser();
     loginForm.hidden = Boolean(user);
     accountActions.hidden = !user;
+    loginForm.style.display = user ? 'none' : '';
+    accountActions.style.display = user ? 'flex' : 'none';
     syncStatus.textContent = user ? `Đã đăng nhập: ${user.email}` : 'Chưa đăng nhập';
     if (user) {
       try {

@@ -16,6 +16,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -91,7 +95,7 @@ a {
   transition: transform 180ms ease;
 }
 
-.sidebar-collapsed {
+.app-shell.sidebar-collapsed {
   --sidebar-width: 78px;
 }
 

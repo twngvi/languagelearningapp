@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
 :root {
   --ink: #493744;
@@ -25,7 +25,7 @@ body {
   min-width: 320px;
   color: var(--ink);
   background: linear-gradient(135deg, #fff8fb 0%, #fffdfd 52%, #fff4f8 100%);
-  font-family: 'DM Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   line-height: 1.5;
 }
 
@@ -63,7 +63,7 @@ a {
   gap: 11px;
   padding: 0 12px;
   color: var(--ink);
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   font-size: 15px;
   font-weight: 800;
 }
@@ -105,8 +105,23 @@ a {
 .nav-item span:first-child {
   width: 20px;
   color: #9599af;
-  font-size: 19px;
   text-align: center;
+}
+
+.nav-icon {
+  display: grid;
+  height: 20px;
+  place-items: center;
+}
+
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
 }
 
 .nav-item:hover,
@@ -168,7 +183,7 @@ p {
 h1,
 h2,
 h3 {
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
 }
 
 h1 {
@@ -254,7 +269,7 @@ h2 {
   border-radius: 12px;
   color: var(--primary);
   background: var(--purple-soft);
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   font-weight: 800;
 }
 
@@ -463,7 +478,7 @@ h2 {
 .sentence-prompt {
   margin: 15px auto 7px;
   color: var(--ink);
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   font-size: 18px;
 }
 
@@ -571,7 +586,7 @@ h2 {
 .speaking-english {
   margin: 22px 0 10px;
   color: var(--ink);
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   font-size: clamp(22px, 4vw, 32px);
   font-weight: 700;
 }
@@ -849,7 +864,7 @@ button:disabled {
 }
 
 .progress-card strong {
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   font-size: 24px;
 }
 
@@ -946,7 +961,7 @@ button:disabled {
 
 .flashcard-face strong {
   max-width: 100%;
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   font-size: clamp(28px, 5vw, 44px);
   line-height: 1.15;
   overflow-wrap: anywhere;
@@ -1575,7 +1590,7 @@ button:disabled {
 }
 
 .stat-card strong {
-  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
   font-size: 17px;
 }
 
@@ -1722,9 +1737,8 @@ button:disabled {
     font-size: 10px;
   }
 
-  .nav-item span:first-child {
+  .nav-item .nav-icon {
     height: 21px;
-    font-size: 17px;
   }
 
   .main-content {

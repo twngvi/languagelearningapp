@@ -4,7 +4,6 @@ export function renderSpeaking() {
       <div><p class="eyebrow">KHO CÂU GIAO TIẾP</p><h1>Luyện nói</h1></div>
       <div class="header-actions"><button class="secondary-button" data-sentence-action="resume" type="button" hidden>Tiếp tục luyện</button><button class="secondary-button" data-sentence-action="bulk" type="button">Nhập hàng loạt</button><button class="primary-button" data-sentence-action="new" type="button">+ Thêm câu</button></div>
     </header>
-    <div class="notice" data-sentence-message role="status" aria-live="polite"></div>
     <section class="speaking-setup" data-speaking-setup aria-label="Thiết lập buổi luyện nói">
       <div><p class="eyebrow">LUYỆN THEO DANH SÁCH</p><h2>Luyện nói theo câu mẫu</h2></div>
       <div class="form-grid">

@@ -8,7 +8,7 @@ import {
 } from './db.js';
 import { cancelSpeech, populateVoiceSelect, speakText, speakTextAndWait } from './speech.js';
 import { VoiceRecorder } from './recorder.js';
-import { showConfirm } from './notifications.js';
+import { showAlert, showConfirm } from './notifications.js';
 
 export const sentenceFields = ['english', 'vietnamese', 'topic', 'notes'];
 
@@ -148,8 +148,12 @@ export async function initializeSpeakingPage() {
   };
 
   const showMessage = (text, type = 'success') => {
-    message.textContent = text;
-    message.className = `notice ${type}`;
+    if (message) {
+      message.textContent = text;
+      message.className = `notice ${type}`;
+      return;
+    }
+    showAlert(text, { type, title: type === 'error' ? 'Không thể thực hiện' : 'Thông báo' });
   };
 
   const renderList = () => {

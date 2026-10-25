@@ -23,6 +23,27 @@ const routes = {
   settings: { render: renderSettings },
 };
 
+function initializeSidebar() {
+  const shell = document.querySelector('.app-shell');
+  const toggle = document.querySelector('.sidebar-toggle');
+  if (!shell || !toggle) return;
+
+  const setCollapsed = (collapsed) => {
+    shell.classList.toggle('sidebar-collapsed', collapsed);
+    toggle.setAttribute('aria-expanded', String(!collapsed));
+    toggle.setAttribute('aria-label', collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng');
+  };
+
+  setCollapsed(localStorage.getItem('shin-sidebar-collapsed') === 'true');
+  toggle.addEventListener('click', () => {
+    const collapsed = !shell.classList.contains('sidebar-collapsed');
+    setCollapsed(collapsed);
+    localStorage.setItem('shin-sidebar-collapsed', String(collapsed));
+  });
+}
+
+initializeSidebar();
+
 function stopActiveActivities() {
   window.speechSynthesis?.cancel();
   document.dispatchEvent(new CustomEvent('app:stop-activities'));

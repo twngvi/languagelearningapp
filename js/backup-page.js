@@ -10,7 +10,57 @@ export function initializeBackupPage() {
   const mergeButton = view.querySelector('[data-backup-action="import-merge"]');
   const replaceButton = view.querySelector('[data-backup-action="import-replace"]');
   const databaseStatus = view.querySelector('[data-database-status]');
+  const loginForm = view.querySelector('[data-sync-login-form]');
+  const syncStatus = view.querySelector('[data-sync-status]');
+  const syncMessage = view.querySelector('[data-sync-message]');
+  const accountActions = view.querySelector('[data-sync-account]');
   let backup = null;
+  let cloud;
+
+  const loadCloud = async () => {
+    if (cloud) return cloud;
+    cloud = {
+      ...(await import('./supabase.js')),
+      ...(await import('./sync.js')),
+    };
+    return cloud;
+  };
+
+  const showSyncMessage = (text, type = 'success') => {
+    syncMessage.textContent = text;
+    syncMessage.className = `notice ${type}`;
+  };
+
+  const renderAccount = async () => {
+    const { getCurrentUser, syncAllLocalData } = await loadCloud();
+    const user = await getCurrentUser();
+    loginForm.hidden = Boolean(user);
+    accountActions.hidden = !user;
+    syncStatus.textContent = user ? `Đã đăng nhập: ${user.email}` : 'Chưa đăng nhập';
+    if (user) {
+      try {
+        await syncAllLocalData();
+        showSyncMessage('Đã đồng bộ dữ liệu với Supabase.');
+      } catch (error) {
+        showSyncMessage(error.message, 'error');
+      }
+    }
+  };
+
+  loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const { requestMagicLink } = await loadCloud();
+      await requestMagicLink(new FormData(loginForm).get('email'));
+      showSyncMessage('Đã gửi link đăng nhập. Hãy mở email để xác nhận.');
+    } catch (error) {
+      showSyncMessage(error.message, 'error');
+    }
+  });
+  renderAccount().catch((error) => {
+    console.error('Không thể khởi tạo đồng bộ Supabase:', error);
+    showSyncMessage('Chưa thể kết nối Supabase. Bạn vẫn có thể dùng database nội bộ.', 'error');
+  });
 
   getDatabaseHealth()
     .then(({ version, counts }) => {
@@ -72,6 +122,17 @@ export function initializeBackupPage() {
         backup = null;
         mergeButton.disabled = true;
         replaceButton.disabled = true;
+      }
+      if (action === 'sync') {
+        const { syncAllLocalData } = await loadCloud();
+        await syncAllLocalData();
+        showSyncMessage('Đã đồng bộ dữ liệu với Supabase.');
+      }
+      if (action === 'sign-out') {
+        const { signOut } = await loadCloud();
+        await signOut();
+        await renderAccount();
+        showSyncMessage('Đã đăng xuất khỏi thiết bị này.');
       }
     } catch (error) {
       console.error('Không thể xử lý sao lưu:', error);

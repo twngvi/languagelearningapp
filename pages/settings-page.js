@@ -6,6 +6,19 @@ export function renderSettings() {
       <p class="form-help">Bạn có thể cài Shin như một ứng dụng từ menu của Chrome hoặc Edge. Khi dùng trên thiết bị khác, hãy xuất tệp JSON ở bên dưới rồi nhập lại trên thiết bị đó.</p>
       <p class="notice" data-database-status role="status" aria-live="polite">Đang kiểm tra bộ nhớ nội bộ...</p>
     </section>
+    <section class="settings-card" data-sync-panel>
+      <div class="section-heading"><div><p class="eyebrow">ĐỒNG BỘ THIẾT BỊ</p><h2>Supabase</h2><p class="header-subtitle">Đăng nhập bằng email để dùng chung dữ liệu trên máy tính và điện thoại.</p></div><span class="status-pill" data-sync-status>Chưa đăng nhập</span></div>
+      <form data-sync-login-form class="backup-import">
+        <label class="field-label" for="sync-email">Email dùng chung</label>
+        <input id="sync-email" name="email" type="email" autocomplete="email" placeholder="ban@example.com" required>
+        <button class="primary-button" type="submit">Gửi link đăng nhập</button>
+      </form>
+      <div class="backup-actions" data-sync-account hidden>
+        <button class="secondary-button" data-sync-action="sync" type="button">Đồng bộ ngay</button>
+        <button class="danger-button" data-sync-action="sign-out" type="button">Đăng xuất</button>
+      </div>
+      <p class="notice" data-sync-message role="status" aria-live="polite"></p>
+    </section>
     <section class="settings-card" data-backup-panel>
       <div class="section-heading"><div><p class="eyebrow">DỮ LIỆU</p><h2>Sao lưu và khôi phục</h2><p class="header-subtitle">Chuyển dữ liệu học tập giữa các thiết bị bằng tệp JSON.</p></div></div>
       <div class="backup-actions"><button class="primary-button" data-backup-action="export-json" type="button">Xuất toàn bộ JSON</button><button class="secondary-button" data-backup-action="export-csv" type="button">Xuất từ vựng CSV</button></div>

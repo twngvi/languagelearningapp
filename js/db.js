@@ -10,6 +10,13 @@ export const STORES = Object.freeze({
   settings: 'settings',
 });
 
+let queueRecordSync;
+import('./sync.js').then((module) => {
+  queueRecordSync = module.queueRecordSync;
+}).catch((error) => {
+  console.error('Không thể tải bộ đồng bộ Supabase:', error);
+});
+
 const storeNames = new Set(Object.values(STORES));
 let databasePromise;
 
@@ -153,6 +160,7 @@ export async function addRecord(storeName, record) {
     const transaction = database.transaction(storeName, 'readwrite');
     const request = transaction.objectStore(storeName).add(value);
     await transactionResult(transaction, request);
+    queueRecordSync?.('upsert', storeName, value);
     return value;
   } catch (error) {
     throw databaseError(error, 'add', storeName);
@@ -199,6 +207,7 @@ export async function updateRecord(storeName, record) {
     const transaction = database.transaction(storeName, 'readwrite');
     const request = transaction.objectStore(storeName).put(value);
     await transactionResult(transaction, request);
+    queueRecordSync?.('upsert', storeName, value);
     return value;
   } catch (error) {
     throw databaseError(error, 'update', storeName);
@@ -215,7 +224,9 @@ export async function deleteRecord(storeName, id) {
     const database = await openDatabase();
     const transaction = database.transaction(storeName, 'readwrite');
     const request = transaction.objectStore(storeName).delete(id);
-    return transactionResult(transaction, request);
+    const result = await transactionResult(transaction, request);
+    queueRecordSync?.('delete', storeName, id);
+    return result;
   } catch (error) {
     throw databaseError(error, 'delete', storeName);
   }

@@ -9,6 +9,7 @@ import {
 import { cancelSpeech, populateVoiceSelect, speakText, speakTextAndWait } from './speech.js';
 import { VoiceRecorder } from './recorder.js';
 import { showAlert, showConfirm } from './notifications.js';
+import { translateEnglishWord, translateVietnameseWord } from './vocabulary.js';
 
 export const sentenceFields = ['english', 'vietnamese', 'topic', 'notes'];
 
@@ -136,6 +137,10 @@ export async function initializeSpeakingPage() {
   let editingId = null;
   let practice = null;
   let recorder;
+  let translationDirection = 'en-vi';
+  let translationController;
+  let translationTimer;
+  let lastAutoTranslation = '';
   const auto = {
     enabled: false,
     repeat: 1,
@@ -326,7 +331,11 @@ export async function initializeSpeakingPage() {
 
   const showForm = (record) => {
     editingId = record?.id || null;
+    translationDirection = 'en-vi';
+    lastAutoTranslation = '';
     form.hidden = false;
+    form.querySelector('[data-english-label]').textContent = 'Câu tiếng Anh *';
+    form.querySelector('[data-vietnamese-label]').textContent = 'Bản dịch tiếng Việt *';
     form.querySelector('[data-sentence-form-title]').textContent = editingId ? 'Chỉnh sửa câu' : 'Thêm câu mới';
     [...form.elements].forEach((element) => {
       if (!element.name) return;
@@ -338,10 +347,76 @@ export async function initializeSpeakingPage() {
 
   const hideForm = () => {
     editingId = null;
+    translationDirection = 'en-vi';
+    translationController?.abort();
+    clearTimeout(translationTimer);
+    lastAutoTranslation = '';
     form.hidden = true;
     form.reset();
+    form.querySelector('[data-english-label]').textContent = 'Câu tiếng Anh *';
+    form.querySelector('[data-vietnamese-label]').textContent = 'Bản dịch tiếng Việt *';
     form.querySelector('[data-sentence-form-title]').textContent = 'Thêm câu mới';
   };
+
+  form.querySelector('[data-sentence-action="swap-language"]').addEventListener('click', () => {
+    const englishInput = form.querySelector('[name="english"]');
+    const vietnameseInput = form.querySelector('[name="vietnamese"]');
+    [englishInput.value, vietnameseInput.value] = [vietnameseInput.value, ''];
+    translationDirection = translationDirection === 'en-vi' ? 'vi-en' : 'en-vi';
+    lastAutoTranslation = '';
+    form.querySelector('[data-english-label]').textContent = translationDirection === 'en-vi'
+      ? 'Câu tiếng Anh *' : 'Câu tiếng Việt *';
+    form.querySelector('[data-vietnamese-label]').textContent = translationDirection === 'en-vi'
+      ? 'Bản dịch tiếng Việt *' : 'Câu tiếng Anh *';
+    englishInput.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  form.querySelector('[name="english"]').addEventListener('input', () => {
+    const englishInput = form.querySelector('[name="english"]');
+    const vietnameseInput = form.querySelector('[name="vietnamese"]');
+    const result = form.querySelector('[data-sentence-translation-result]');
+    const english = englishInput.value.trim();
+
+    clearTimeout(translationTimer);
+    translationController?.abort();
+    if (!english) {
+      if (vietnameseInput.value === lastAutoTranslation) vietnameseInput.value = '';
+      lastAutoTranslation = '';
+      result.textContent = '';
+      result.className = 'lookup-result';
+      return;
+    }
+    if (vietnameseInput.value && vietnameseInput.value !== lastAutoTranslation) return;
+
+    translationTimer = setTimeout(async () => {
+      translationController = new AbortController();
+      result.className = 'lookup-result is-loading';
+      result.textContent = 'Đang gợi ý bản dịch tiếng Việt...';
+      try {
+        const translation = translationDirection === 'en-vi'
+          ? await translateEnglishWord(english, translationController.signal)
+          : await translateVietnameseWord(english, translationController.signal);
+        if (englishInput.value.trim() !== english) return;
+        const canApplyTranslation = !vietnameseInput.value
+          || vietnameseInput.value === lastAutoTranslation;
+        if (canApplyTranslation) {
+          vietnameseInput.value = translation;
+          lastAutoTranslation = translation;
+        }
+        result.className = 'lookup-result is-success';
+        result.textContent = canApplyTranslation
+          ? `Đã tự động điền bản dịch: ${translation}`
+          : `Gợi ý bản dịch tham khảo: ${translation}`;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        console.error('Không thể tự động dịch câu:', error);
+        result.className = 'lookup-result is-error';
+        result.textContent = `Chưa thể tự động gợi ý bản dịch: ${error.message}`;
+      }
+    }, 500);
+  });
+  form.querySelector('[name="vietnamese"]').addEventListener('input', (event) => {
+    if (event.target.value !== lastAutoTranslation) lastAutoTranslation = '';
+  });
 
   view.addEventListener('input', (event) => {
     if (event.target.matches('[data-sentence-search]')) renderList();
@@ -509,6 +584,9 @@ export async function initializeSpeakingPage() {
     try {
       const data = Object.fromEntries(new FormData(form));
       data.favorite = form.elements.favorite.checked;
+      if (translationDirection === 'vi-en') {
+        [data.english, data.vietnamese] = [data.vietnamese, data.english];
+      }
       const wasEditing = Boolean(editingId);
       if (wasEditing) await editSentence({ ...records.find((item) => item.id === editingId), ...data, id: editingId });
       else await saveSentence(data);
@@ -564,7 +642,9 @@ export async function initializeSpeakingPage() {
   view.addEventListener('click', (event) => {
     const actionElement = event.target.closest('[data-sentence-action="speak-form"]');
     if (!actionElement) return;
-    const text = form.elements.english.value.trim();
+    const text = (translationDirection === 'en-vi'
+      ? form.elements.english.value
+      : form.elements.vietnamese.value).trim();
     if (text) speakText(text, { lang: 'en-US', voiceName: form.elements.voice.value, rate: form.elements.rate.value });
   });
   await load();

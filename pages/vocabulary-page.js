@@ -22,8 +22,8 @@ export function renderVocabulary() {
       <div class="section-heading"><h2 data-vocabulary-form-title>Thêm từ mới</h2><button class="close-button" data-vocabulary-action="cancel" type="button" aria-label="Đóng biểu mẫu">×</button></div>
       <input type="hidden" name="id">
       <div class="form-grid">
-        <label>Từ tiếng Anh *<input name="word" required></label>
-        <label>Nghĩa tiếng Việt *<input name="meaning" required></label>
+        <div class="translation-field"><label><span data-word-label>Từ tiếng Anh *</span><input name="word" required></label><button class="language-swap-button" data-vocabulary-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch">↔</button></div>
+        <div class="translation-field"><label><span data-meaning-label>Nghĩa tiếng Việt *</span><input name="meaning" required></label></div>
         <label>Phiên âm<input name="pronunciation" placeholder="/.../"></label>
         <label>Bộ từ<input name="wordSet"></label>
         <label>Chủ đề<input name="topic"></label>

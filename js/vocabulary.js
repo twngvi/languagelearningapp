@@ -93,6 +93,31 @@ export async function lookupEnglishWord(word, signal) {
   };
 }
 
+export async function translateEnglishWord(word, signal) {
+  return translateText(word, 'en|vi', signal);
+}
+
+export async function translateVietnameseWord(text, signal) {
+  return translateText(text, 'vi|en', signal);
+}
+
+async function translateText(text, languagePair, signal) {
+  const normalizedText = String(text || '').trim();
+  if (!normalizedText) throw new TypeError('Hãy nhập nội dung trước khi dịch.');
+  if (languagePair === 'en|vi' && !/^[a-zA-Z][a-zA-Z0-9\s'’.,!?;:()\-/"“”‘’]*$/.test(normalizedText)) {
+    throw new Error('Chỉ hỗ trợ từ hoặc câu tiếng Anh.');
+  }
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(normalizedText)}&langpair=${languagePair}`;
+  const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error(`Nguồn dịch trả về lỗi HTTP ${response.status}.`);
+  const result = await response.json();
+  const translation = result.responseData?.translatedText?.trim();
+  if (!translation || result.responseStatus !== 200) {
+    throw new Error('Không tìm thấy bản dịch phù hợp.');
+  }
+  return translation;
+}
+
 function populateFilter(select, values) {
   const currentValue = select.value;
   select.innerHTML = `<option value="">${select.dataset.vocabularyFilter === 'wordSet' ? 'Tất cả bộ từ' : 'Tất cả chủ đề'}</option>`;
@@ -116,6 +141,10 @@ export async function initializeVocabularyPage() {
   const setForm = view.querySelector('[data-set-form]');
   const setList = view.querySelector('[data-set-list]');
   let lookupController;
+  let translationController;
+  let translationTimer;
+  let lastAutoMeaning = '';
+  let translationDirection = 'en-vi';
   const renderList = () => {
     if (!view.querySelector('[data-vocabulary-search]')) return;
     const filters = {
@@ -152,7 +181,11 @@ export async function initializeVocabularyPage() {
 
   const showForm = (record) => {
     editingId = record?.id || null;
+    translationDirection = 'en-vi';
+    lastAutoMeaning = '';
     form.hidden = false;
+    form.querySelector('[data-word-label]').textContent = 'Từ tiếng Anh *';
+    form.querySelector('[data-meaning-label]').textContent = 'Nghĩa tiếng Việt *';
     form.querySelector('[data-vocabulary-form-title]').textContent = editingId ? 'Chỉnh sửa từ' : 'Thêm từ mới';
     [...form.elements].forEach((element) => {
       if (!element.name) return;
@@ -170,12 +203,76 @@ export async function initializeVocabularyPage() {
 
   const hideForm = () => {
     editingId = null;
+    translationDirection = 'en-vi';
+    translationController?.abort();
+    clearTimeout(translationTimer);
+    lastAutoMeaning = '';
     form.reset();
+    form.querySelector('[data-word-label]').textContent = 'Từ tiếng Anh *';
+    form.querySelector('[data-meaning-label]').textContent = 'Nghĩa tiếng Việt *';
     form.hidden = true;
   };
 
   view.addEventListener('input', renderList);
   view.addEventListener('change', renderList);
+  form.querySelector('[data-vocabulary-action="swap-language"]').addEventListener('click', () => {
+    const wordInput = form.querySelector('[name="word"]');
+    const meaningInput = form.querySelector('[name="meaning"]');
+    [wordInput.value, meaningInput.value] = [meaningInput.value, ''];
+    translationDirection = translationDirection === 'en-vi' ? 'vi-en' : 'en-vi';
+    lastAutoMeaning = '';
+    form.querySelector('[data-word-label]').textContent = translationDirection === 'en-vi' ? 'Từ tiếng Anh *' : 'Từ tiếng Việt *';
+    form.querySelector('[data-meaning-label]').textContent = translationDirection === 'en-vi' ? 'Nghĩa tiếng Việt *' : 'Từ tiếng Anh *';
+    wordInput.placeholder = translationDirection === 'en-vi' ? '' : 'Ví dụ: xin chào';
+    meaningInput.placeholder = translationDirection === 'en-vi' ? '' : 'Ví dụ: hello';
+    wordInput.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  form.querySelector('[name="word"]').addEventListener('input', () => {
+    const wordInput = form.querySelector('[name="word"]');
+    const meaningInput = form.querySelector('[name="meaning"]');
+    const lookupResult = view.querySelector('[data-lookup-result]');
+    const word = wordInput.value.trim();
+
+    clearTimeout(translationTimer);
+    translationController?.abort();
+    if (!word) {
+      if (meaningInput.value === lastAutoMeaning) meaningInput.value = '';
+      lastAutoMeaning = '';
+      if (lookupResult.dataset.lookupType === 'translation') lookupResult.textContent = '';
+      return;
+    }
+    if (meaningInput.value && meaningInput.value !== lastAutoMeaning) return;
+
+    translationTimer = setTimeout(async () => {
+      translationController = new AbortController();
+      lookupResult.dataset.lookupType = 'translation';
+      lookupResult.className = 'lookup-result is-loading';
+      lookupResult.textContent = 'Đang gợi ý nghĩa tiếng Việt...';
+      try {
+        const translation = translationDirection === 'en-vi'
+          ? await translateEnglishWord(word, translationController.signal)
+          : await translateVietnameseWord(word, translationController.signal);
+        if (wordInput.value.trim() !== word) return;
+        const canApplyTranslation = !meaningInput.value || meaningInput.value === lastAutoMeaning;
+        if (canApplyTranslation) {
+          meaningInput.value = translation;
+          lastAutoMeaning = translation;
+        }
+        lookupResult.className = 'lookup-result is-success';
+        lookupResult.textContent = canApplyTranslation
+          ? `Đã tự động điền nghĩa: ${translation}`
+          : `Gợi ý tham khảo: ${translation}`;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        console.error('Không thể tự động dịch từ vựng:', error);
+        lookupResult.className = 'lookup-result is-error';
+        lookupResult.textContent = `Chưa thể tự động gợi ý nghĩa: ${error.message}`;
+      }
+    }, 500);
+  });
+  form.querySelector('[name="meaning"]').addEventListener('input', (event) => {
+    if (event.target.value !== lastAutoMeaning) lastAutoMeaning = '';
+  });
   view.addEventListener('click', async (event) => {
     const actionElement = event.target.closest('[data-vocabulary-action]');
     if (!actionElement) return;
@@ -209,7 +306,10 @@ export async function initializeVocabularyPage() {
         try {
           lookupController?.abort();
           lookupController = new AbortController();
-          const result = await lookupEnglishWord(form.querySelector('[name="word"]').value, lookupController.signal);
+          const lookupWord = translationDirection === 'en-vi'
+            ? form.querySelector('[name="word"]').value
+            : form.querySelector('[name="meaning"]').value;
+          const result = await lookupEnglishWord(lookupWord, lookupController.signal);
           form.querySelector('[name="pronunciation"]').value = result.pronunciation;
           form.querySelector('[name="example"]').value ||= result.example;
           lookupResult.className = 'lookup-result is-success';
@@ -224,7 +324,10 @@ export async function initializeVocabularyPage() {
       }
       if (action === 'speak-form') {
         try {
-          speakText(form.querySelector('[name="word"]').value, {
+          const speechText = translationDirection === 'en-vi'
+            ? form.querySelector('[name="word"]').value
+            : form.querySelector('[name="meaning"]').value;
+          speakText(speechText, {
             voiceName: form.querySelector('[name="voice"]').value,
             rate: form.querySelector('[name="rate"]').value,
           });
@@ -323,6 +426,9 @@ export async function initializeVocabularyPage() {
     const input = Object.fromEntries([...form.elements]
       .filter((element) => element.name)
       .map((element) => [element.name, element.type === 'checkbox' ? element.checked : element.value]));
+    if (translationDirection === 'vi-en') {
+    [input.word, input.meaning] = [input.meaning, input.word];
+    }
     try {
       const duplicate = await findDuplicateVocabulary(input.word, editingId);
       if (duplicate && !await showConfirm(`Từ "${duplicate.word}" có thể đã tồn tại. Vẫn lưu bản ghi này?`, {

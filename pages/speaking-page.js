@@ -25,11 +25,12 @@ export function renderSpeaking() {
     <form class="vocabulary-form" data-sentence-form hidden>
       <div class="section-heading"><h2 data-sentence-form-title>Thêm câu mới</h2><button class="close-button" data-sentence-action="cancel" type="button" aria-label="Đóng biểu mẫu">×</button></div>
       <div class="form-grid">
-        <label class="wide-field">Câu tiếng Anh *<textarea name="english" rows="2" required></textarea></label>
-        <label class="wide-field">Bản dịch tiếng Việt *<textarea name="vietnamese" rows="2" required></textarea></label>
+        <div class="translation-field wide-field"><label><span data-english-label>Câu tiếng Anh *</span><textarea name="english" rows="2" required></textarea></label><button class="language-swap-button" data-sentence-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch">↔</button></div>
+        <label class="wide-field"><span data-vietnamese-label>Bản dịch tiếng Việt *</span><textarea name="vietnamese" rows="2" required></textarea></label>
         <label>Chủ đề<input name="topic" list="sentence-topics" placeholder="Ví dụ: Du lịch"></label>
         <label class="wide-field">Ghi chú<input name="notes"></label>
       </div>
+      <div class="lookup-result" data-sentence-translation-result role="status" aria-live="polite"></div>
       <datalist id="sentence-topics"><option value="Giao tiếp hằng ngày"><option value="Giới thiệu bản thân"><option value="Du lịch"><option value="Mua sắm"><option value="Công việc"><option value="Học tập"></datalist>
       <div class="speech-controls"><button class="secondary-button" data-sentence-action="speak-form" type="button">🔊 Phát âm</button><label>Giọng đọc<select name="voice"><option value="">Giọng mặc định</option></select></label><label>Tốc độ<input name="rate" type="range" min="0.5" max="2" step="0.1" value="1"></label></div>
       <div class="form-checks"><label><input name="favorite" type="checkbox"> Yêu thích</label></div>

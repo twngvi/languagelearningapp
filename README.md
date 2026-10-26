@@ -9,6 +9,9 @@ Shin là ứng dụng học tiếng Anh cá nhân, giao diện tiếng Việt, c
 ## Tính năng chính
 
 - Lưu, sửa, xóa và tìm kiếm từ vựng.
+- Tự động gợi ý và điền nghĩa tiếng Việt khi nhập từ tiếng Anh.
+- Tự động gợi ý và điền bản dịch tiếng Việt khi nhập câu tiếng Anh.
+- Có thể đổi chiều dịch để nhập tiếng Việt trước; dữ liệu vẫn được lưu và hiển thị theo tiếng Anh.
 - Tạo bộ từ để học theo chủ đề.
 - Nhập nhiều từ hoặc câu cùng lúc.
 - Học bằng flashcard, trắc nghiệm và điền từ.

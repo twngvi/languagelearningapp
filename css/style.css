@@ -258,7 +258,9 @@ a {
 }
 
 .main-content {
-  width: min(1080px, calc(100% - var(--sidebar-width)));
+  width: calc(100% - var(--sidebar-width));
+  max-width: none;
+  min-width: 0;
   margin-left: var(--sidebar-width);
   padding: 42px clamp(24px, 5vw, 70px) 35px;
   outline: none;
@@ -1454,6 +1456,25 @@ button:disabled {
   font-weight: 600;
 }
 
+.translation-field {
+  position: relative;
+}
+
+.language-swap-button {
+  position: absolute;
+  top: 23px;
+  right: 8px;
+  z-index: 1;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px 7px;
+  color: var(--primary);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 16px;
+}
+
 .form-grid input {
   width: 100%;
   min-height: 39px;
@@ -1529,6 +1550,12 @@ button:disabled {
   color: #bd4f5d;
   background: #fff4f4;
   border-left-color: #bd4f5d;
+}
+
+.lookup-result.is-loading {
+  color: var(--muted);
+  background: #fafaff;
+  border-left-color: var(--muted);
 }
 
 .lookup-result strong,

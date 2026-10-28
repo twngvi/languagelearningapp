@@ -2,6 +2,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 export const SUPABASE_URL = 'https://seenklndshnsbcjayovs.supabase.co';
 export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_n4ZTXH72mRuY5s55cvWslQ_KAkIEct5';
+export const PUBLIC_APP_URL = 'https://twngvi.github.io/languagelearningapp/#settings';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -25,7 +26,7 @@ export async function requestMagicLink(email) {
 
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname },
+    options: { emailRedirectTo: PUBLIC_APP_URL },
   });
   if (error) throw error;
 }

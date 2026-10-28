@@ -8,24 +8,39 @@ export function renderVocabulary() {
   return `
     <header class="page-header">
       <div><p class="eyebrow">KHO TỪ VỰNG</p><h1>Từ vựng</h1></div>
-      <div class="header-actions"><button class="secondary-button" data-vocabulary-action="bulk" type="button">Nhập hàng loạt</button><button class="secondary-button" data-vocabulary-action="sets" type="button">Quản lý bộ từ</button><button class="primary-button" data-vocabulary-action="new" type="button">+ Thêm từ</button></div>
+      <div class="header-actions vocabulary-actions"><button class="secondary-button vocabulary-action-button vocabulary-action-bulk" data-vocabulary-action="bulk" type="button">Nhập hàng loạt</button><button class="secondary-button vocabulary-action-button vocabulary-action-sets" data-vocabulary-action="sets" type="button">Quản lý bộ từ</button><button class="primary-button vocabulary-action-button vocabulary-action-new" data-vocabulary-action="new" type="button">+ Thêm từ</button></div>
     </header>
     <section class="vocabulary-toolbar" aria-label="Tìm kiếm và lọc từ vựng">
       <label class="search-field"><span aria-hidden="true">⌕</span><input data-vocabulary-search type="search" placeholder="Tìm từ, nghĩa hoặc ghi chú..." aria-label="Tìm kiếm từ vựng"></label>
       <select data-vocabulary-filter="wordSet" aria-label="Lọc theo bộ từ"><option value="">Tất cả bộ từ</option></select>
       <select data-vocabulary-filter="topic" aria-label="Lọc theo chủ đề"><option value="">Tất cả chủ đề</option></select>
-      <label class="check-filter"><input data-vocabulary-filter="favorite" type="checkbox"> Yêu thích</label>
-      <label class="check-filter"><input data-vocabulary-filter="difficult" type="checkbox"> Từ khó</label>
-      <label class="check-filter"><input data-vocabulary-filter="due" type="checkbox"> Cần ôn</label>
+      <div class="vocabulary-status-filters" aria-label="Lọc theo trạng thái">
+        <label class="check-filter"><input data-vocabulary-filter="favorite" type="checkbox"> Yêu thích</label>
+        <label class="check-filter"><input data-vocabulary-filter="difficult" type="checkbox"> Từ khó</label>
+        <label class="check-filter"><input data-vocabulary-filter="due" type="checkbox"> Cần ôn</label>
+      </div>
     </section>
     <form class="vocabulary-form" data-vocabulary-form hidden>
       <div class="section-heading"><h2 data-vocabulary-form-title>Thêm từ mới</h2><button class="close-button" data-vocabulary-action="cancel" type="button" aria-label="Đóng biểu mẫu">×</button></div>
       <input type="hidden" name="id">
       <div class="form-grid">
-        <div class="translation-field"><label><span data-word-label>Từ tiếng Anh *</span><input name="word" required></label><button class="language-swap-button" data-vocabulary-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch">↔</button></div>
-        <div class="translation-field"><label><span data-meaning-label>Nghĩa tiếng Việt *</span><input name="meaning" required></label></div>
+        <div class="translation-pair">
+          <div class="translation-field"><label><span data-word-label>Từ tiếng Anh *</span><input name="word" required></label></div>
+          <button class="language-swap-button" data-vocabulary-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch"><span aria-hidden="true">↔</span><small>Đổi chiều</small></button>
+          <div class="translation-field"><label><span data-meaning-label>Nghĩa tiếng Việt *</span><input name="meaning" required></label></div>
+        </div>
         <label>Phiên âm<input name="pronunciation" placeholder="/.../"></label>
-        <label>Bộ từ<input name="wordSet"></label>
+        <div class="word-set-picker" data-word-set-picker>
+          <span class="field-label">Bộ từ</span>
+          <button class="word-set-picker-trigger" data-word-set-toggle type="button">Chọn bộ từ</button>
+          <div class="word-set-picker-menu" data-word-set-menu hidden>
+            <input data-word-set-search type="search" placeholder="Tìm bộ từ..." aria-label="Tìm bộ từ">
+            <div class="word-set-picker-options" data-word-set-options></div>
+            <div class="word-set-create"><input data-word-set-new placeholder="Tên bộ mới"><button class="secondary-button" data-word-set-create type="button">+ Tạo bộ</button></div>
+          </div>
+          <input name="wordSet" type="hidden">
+          <input name="wordSetIds" type="hidden">
+        </div>
         <label>Chủ đề<input name="topic"></label>
         <label>Ví dụ<input name="example"></label>
         <label class="wide-field">Ghi chú<input name="notes"></label>

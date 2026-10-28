@@ -25,8 +25,11 @@ export function renderSpeaking() {
     <form class="vocabulary-form" data-sentence-form hidden>
       <div class="section-heading"><h2 data-sentence-form-title>Thêm câu mới</h2><button class="close-button" data-sentence-action="cancel" type="button" aria-label="Đóng biểu mẫu">×</button></div>
       <div class="form-grid">
-        <div class="translation-field wide-field"><label><span data-english-label>Câu tiếng Anh *</span><textarea name="english" rows="2" required></textarea></label><button class="language-swap-button" data-sentence-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch">↔</button></div>
-        <label class="wide-field"><span data-vietnamese-label>Bản dịch tiếng Việt *</span><textarea name="vietnamese" rows="2" required></textarea></label>
+        <div class="translation-pair translation-pair-sentence">
+          <div class="translation-field"><label><span data-english-label>Câu tiếng Anh *</span><textarea name="english" rows="2" required></textarea></label></div>
+          <button class="language-swap-button" data-sentence-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch"><span aria-hidden="true">↔</span><small>Đổi chiều</small></button>
+          <div class="translation-field"><label><span data-vietnamese-label>Bản dịch tiếng Việt *</span><textarea name="vietnamese" rows="2" required></textarea></label></div>
+        </div>
         <label>Chủ đề<input name="topic" list="sentence-topics" placeholder="Ví dụ: Du lịch"></label>
         <label class="wide-field">Ghi chú<input name="notes"></label>
       </div>

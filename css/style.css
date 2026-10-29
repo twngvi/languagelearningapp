@@ -95,6 +95,76 @@ select option:checked {
   background: var(--primary);
 }
 
+.custom-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.custom-select > select {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 38px 9px 12px;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='m3.25 5.25 3.75 3.5 3.75-3.5' stroke='%23bd6f8e' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-select-trigger:hover,
+.custom-select-trigger[aria-expanded="true"] {
+  border-color: var(--primary);
+  background-color: #fffafd;
+}
+
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  display: grid;
+  max-height: 190px;
+  padding: 7px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #fffdfd, #fff5f8);
+  border: 1px solid #efcbd9;
+  border-radius: 12px;
+  box-shadow: 0 16px 30px rgba(150, 91, 117, 0.18);
+}
+
+.custom-select-option {
+  padding: 8px 10px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  text-align: left;
+  font-size: 12px;
+}
+
+.custom-select-option:hover,
+.custom-select-option.is-selected {
+  color: #fff;
+  background: var(--primary);
+}
+
 .form-grid select,
 .speech-controls select,
 .vocabulary-toolbar select,

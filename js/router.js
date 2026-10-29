@@ -1,10 +1,11 @@
 export class Router {
-  constructor({ routes, view, navigationSelector = '.nav-item', onLeave, onEnter }) {
+  constructor({ routes, view, navigationSelector = '.nav-item', onLeave, onEnter, onRender }) {
     this.routes = routes;
     this.view = view;
     this.navigationSelector = navigationSelector;
     this.onLeave = onLeave;
     this.onEnter = onEnter;
+    this.onRender = onRender;
     this.currentRoute = null;
     this.handleRouteChange = this.handleRouteChange.bind(this);
   }
@@ -28,6 +29,7 @@ export class Router {
 
     this.currentRoute = route;
     this.view.innerHTML = this.routes[route].render();
+    this.onRender?.(this.view);
     this.updateNavigation(route);
     this.onEnter?.(route);
     this.view.focus({ preventScroll: true });

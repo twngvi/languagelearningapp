@@ -13,6 +13,7 @@ import { listDueVocabulary } from './review.js';
 import { getLearningStatistics } from './statistics.js';
 import { listWordSets } from './word-sets.js';
 import { initializeBackupPage } from './backup-page.js';
+import { enhanceCustomSelects } from './custom-select.js';
 
 const routes = {
   home: { render: renderHome },
@@ -53,6 +54,7 @@ const router = new Router({
   routes,
   view: document.querySelector('#app-view'),
   onLeave: stopActiveActivities,
+  onRender: enhanceCustomSelects,
   onEnter: (route) => {
     if (route === 'vocabulary') {
       initializeVocabularyPage();

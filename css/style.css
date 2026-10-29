@@ -57,10 +57,10 @@ select {
   padding: 9px 38px 9px 12px;
   color: var(--ink);
   background-color: var(--surface);
-  background-image: linear-gradient(45deg, transparent 50%, var(--primary) 50%), linear-gradient(135deg, var(--primary) 50%, transparent 50%);
-  background-position: calc(100% - 17px) 18px, calc(100% - 12px) 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='m3.25 5.25 3.75 3.5 3.75-3.5' stroke='%23bd6f8e' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: right 12px center;
   background-repeat: no-repeat;
-  background-size: 5px 5px, 5px 5px;
+  background-size: 14px 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
   outline: none;
@@ -72,12 +72,14 @@ select {
 
 select:hover {
   border-color: #eab6c8;
+  background-color: #fffafd;
 }
 
 select:focus,
 select:focus-visible {
   border-color: var(--primary);
   outline: 0;
+  background-color: #fffafd;
   box-shadow: 0 0 0 3px rgba(215, 140, 166, 0.18);
 }
 
@@ -86,8 +88,9 @@ option {
   background: #fff8fb;
 }
 
-option:checked,
-option:hover {
+select option:hover,
+select option:focus,
+select option:checked {
   color: #fff;
   background: var(--primary);
 }

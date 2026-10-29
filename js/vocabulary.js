@@ -408,7 +408,7 @@ export async function initializeVocabularyPage() {
         }
       }
       if (action === 'speak' && record && 'speechSynthesis' in window) {
-        speakText(record.word, { rate: 1 });
+        speakText(record.word);
       }
       if (action === 'lookup') {
         const lookupResult = view.querySelector('[data-lookup-result]');

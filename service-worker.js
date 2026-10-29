@@ -1,10 +1,11 @@
-const CACHE_NAME = 'personal-language-app-core-v20';
+const CACHE_NAME = 'personal-language-app-core-v21';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
   './js/app.js',
+  './js/custom-select.js',
   './js/router.js',
   './js/db.js',
   './js/vocabulary.js',

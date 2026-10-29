@@ -78,19 +78,59 @@ export async function lookupEnglishWord(word, signal) {
   }
   const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(normalizedWord)}`;
   const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
-  if (response.status === 404) throw new Error('Không tìm thấy kết quả. Bạn vẫn có thể nhập nghĩa tiếng Việt thủ công.');
+  if (response.status === 404) {
+    const pronunciation = await lookupFallbackPronunciation(normalizedWord, signal);
+    if (pronunciation) return { word: normalizedWord, pronunciation, definitions: [], example: '', source: url };
+    throw new Error('Không tìm thấy kết quả. Bạn vẫn có thể nhập nghĩa tiếng Việt thủ công.');
+  }
   if (!response.ok) throw new Error(`Nguồn tra cứu trả về lỗi HTTP ${response.status}.`);
   const entries = await response.json();
   const entry = entries[0];
   const definitions = (entry.meanings || []).flatMap((meaning) => (meaning.definitions || [])
     .slice(0, 2).map((definition) => `${meaning.partOfSpeech}: ${definition.definition}`));
+  const pronunciation = entry.phonetic
+    || entry.phonetics?.find((item) => item.text)?.text
+    || entry.meanings?.flatMap((meaning) => meaning.definitions || []).find((item) => item.phonetic)?.phonetic
+    || await lookupFallbackPronunciation(normalizedWord, signal);
   return {
     word: entry.word || normalizedWord,
-    pronunciation: entry.phonetic || entry.phonetics?.find((item) => item.text)?.text || '',
+    pronunciation,
     definitions,
     example: entry.meanings?.flatMap((meaning) => meaning.definitions || []).find((item) => item.example)?.example || '',
     source: url,
   };
+}
+
+const phonemeMap = {
+  AA: 'ɑ', AE: 'æ', AH: 'ə', AO: 'ɔ', AW: 'aʊ', AY: 'aɪ',
+  B: 'b', CH: 'tʃ', D: 'd', DH: 'ð', EH: 'ɛ', ER: 'ər', EY: 'eɪ',
+  F: 'f', G: 'ɡ', HH: 'h', IH: 'ɪ', IY: 'iː', JH: 'dʒ', K: 'k',
+  L: 'l', M: 'm', N: 'n', NG: 'ŋ', OW: 'oʊ', OY: 'ɔɪ', P: 'p',
+  R: 'r', S: 's', SH: 'ʃ', T: 't', TH: 'θ', UH: 'ʊ', UW: 'uː',
+  V: 'v', W: 'w', Y: 'j', Z: 'z', ZH: 'ʒ',
+};
+
+function arpabetToIpa(value) {
+  const tokens = String(value || '').trim().split(/\s+/);
+  let pronunciation = '';
+  tokens.forEach((token) => {
+    const stress = token.slice(-1);
+    const phoneme = token.replace(/[012]$/, '');
+    if (stress === '1') pronunciation += 'ˈ';
+    pronunciation += phonemeMap[phoneme] || '';
+  });
+  return pronunciation ? `/${pronunciation}/` : '';
+}
+
+async function lookupFallbackPronunciation(word, signal) {
+  const response = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&md=r&max=1`, {
+    signal,
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) return '';
+  const result = await response.json();
+  const pronunciationTag = result[0]?.tags?.find((tag) => tag.startsWith('pron:'));
+  return arpabetToIpa(pronunciationTag?.slice(5));
 }
 
 export async function translateEnglishWord(word, signal) {
@@ -102,20 +142,24 @@ export async function translateVietnameseWord(text, signal) {
 }
 
 async function translateText(text, languagePair, signal) {
-  const normalizedText = String(text || '').trim();
+  const normalizedText = String(text || '')
+    .trim()
+    .replace(/^[.,!?;:]+|[.,!?;:]+$/g, '')
+    .replace(/\s+/g, ' ');
   if (!normalizedText) throw new TypeError('Hãy nhập nội dung trước khi dịch.');
   if (languagePair === 'en|vi' && !/^[a-zA-Z][a-zA-Z0-9\s'’.,!?;:()\-/"“”‘’]*$/.test(normalizedText)) {
     throw new Error('Chỉ hỗ trợ từ hoặc câu tiếng Anh.');
   }
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(normalizedText)}&langpair=${languagePair}`;
+  const [sourceLanguage, targetLanguage] = languagePair.split('|');
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(normalizedText)}`;
   const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Nguồn dịch trả về lỗi HTTP ${response.status}.`);
   const result = await response.json();
-  const translation = result.responseData?.translatedText?.trim();
-  if (!translation || result.responseStatus !== 200) {
-    throw new Error('Không tìm thấy bản dịch phù hợp.');
-  }
-  return translation;
+  const translation = Array.isArray(result[0])
+    ? result[0].map((part) => part?.[0] || '').join('').trim()
+    : '';
+  if (!translation) throw new Error('Không tìm thấy bản dịch phù hợp.');
+  return translation.replace(/^[.,!?;:]+|[.,!?;:]+$/g, '').trim();
 }
 
 function populateFilter(select, values) {
@@ -302,6 +346,7 @@ export async function initializeVocabularyPage() {
     const meaningInput = form.querySelector('[name="meaning"]');
     const lookupResult = view.querySelector('[data-lookup-result]');
     const word = wordInput.value.trim();
+    updatePronunciation();
 
     clearTimeout(translationTimer);
     translationController?.abort();
@@ -327,6 +372,7 @@ export async function initializeVocabularyPage() {
         if (canApplyTranslation) {
           meaningInput.value = translation;
           lastAutoMeaning = translation;
+          if (translationDirection === 'vi-en') updatePronunciation();
         }
         lookupResult.className = 'lookup-result is-success';
         lookupResult.textContent = canApplyTranslation
@@ -342,12 +388,14 @@ export async function initializeVocabularyPage() {
   });
   form.querySelector('[name="meaning"]').addEventListener('input', (event) => {
     if (event.target.value !== lastAutoMeaning) lastAutoMeaning = '';
+    if (translationDirection === 'vi-en') updatePronunciation();
   });
   const updatePronunciation = () => {
     const wordInput = form.querySelector('[name="word"]');
     const meaningInput = form.querySelector('[name="meaning"]');
     const pronunciationInput = form.querySelector('[name="pronunciation"]');
-    const englishText = (translationDirection === 'en-vi' ? wordInput : meaningInput).value.trim();
+    const englishInput = translationDirection === 'en-vi' ? wordInput : meaningInput;
+    const englishText = englishInput.value.trim().replace(/[.,!?;:]+$/g, '').trim();
 
     clearTimeout(pronunciationTimer);
     pronunciationController?.abort();
@@ -362,7 +410,7 @@ export async function initializeVocabularyPage() {
       pronunciationController = new AbortController();
       try {
         const result = await lookupEnglishWord(englishText, pronunciationController.signal);
-        const currentEnglishText = (translationDirection === 'en-vi' ? wordInput : meaningInput).value.trim();
+        const currentEnglishText = englishInput.value.trim().replace(/[.,!?;:]+$/g, '').trim();
         if (currentEnglishText !== englishText || !result.pronunciation) return;
         const canApplyPronunciation = !pronunciationInput.value
           || pronunciationInput.value === lastAutoPronunciation;

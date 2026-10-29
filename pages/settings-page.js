@@ -1,11 +1,6 @@
 export function renderSettings() {
   return `
     <header class="page-header"><div><p class="eyebrow">CÁ NHÂN HÓA</p><h1>Cài đặt</h1></div></header>
-    <section class="settings-card">
-      <div class="section-heading"><div><p class="eyebrow">ỨNG DỤNG CÁ NHÂN</p><h2>Lưu nội bộ trên thiết bị</h2></div><span class="status-pill">Ngoại tuyến</span></div>
-      <p class="form-help">Bạn có thể cài Shin như một ứng dụng từ menu của Chrome hoặc Edge. Khi dùng trên thiết bị khác, hãy xuất tệp JSON ở bên dưới rồi nhập lại trên thiết bị đó.</p>
-      <p class="notice" data-database-status role="status" aria-live="polite">Đang kiểm tra bộ nhớ nội bộ...</p>
-    </section>
     <section class="settings-card" data-sync-panel>
       <div class="section-heading"><div><p class="eyebrow">ĐỒNG BỘ THIẾT BỊ</p><h2>Supabase</h2></div><span class="status-pill" data-sync-status>Chưa đăng nhập</span></div>
       <form data-sync-login-form class="sync-login-form">
@@ -34,6 +29,11 @@ export function renderSettings() {
       <p class="form-help">Bản sao lưu JSON gồm từ vựng, câu giao tiếp, bộ từ, lịch sử học và cài đặt. Bản ghi âm không được đưa vào tệp văn bản; chúng chỉ lưu cục bộ trên thiết bị này.</p>
       <div class="backup-import"><label class="file-picker">Chọn tệp JSON<input data-backup-file type="file" accept=".json,application/json"></label><div class="backup-preview" data-backup-preview></div><div class="backup-actions"><button class="secondary-button" data-backup-action="import-merge" type="button" disabled>Gộp dữ liệu</button><button class="danger-button" data-backup-action="import-replace" type="button" disabled>Thay thế dữ liệu</button></div></div>
       <p class="notice" data-backup-message role="status" aria-live="polite"></p>
+    </section>
+    <section class="settings-card">
+      <div class="section-heading"><div><p class="eyebrow">ỨNG DỤNG CÁ NHÂN</p><h2>Lưu nội bộ trên thiết bị</h2></div><span class="status-pill">Ngoại tuyến</span></div>
+      <p class="form-help">Bạn có thể cài Shin như một ứng dụng từ menu của Chrome hoặc Edge. Khi dùng trên thiết bị khác, hãy xuất tệp JSON ở bên dưới rồi nhập lại trên thiết bị đó.</p>
+      <p class="notice" data-database-status role="status" aria-live="polite">Đang kiểm tra bộ nhớ nội bộ...</p>
     </section>
   `;
 }

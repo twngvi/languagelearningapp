@@ -122,6 +122,8 @@ select option:checked {
   background-size: 14px 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.4;
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -150,19 +152,25 @@ select option:checked {
 }
 
 .custom-select-option {
-  padding: 8px 10px;
+  width: 100%;
+  padding: 7px 10px;
   color: var(--ink);
   background: transparent;
   border: 0;
   border-radius: 7px;
   text-align: left;
   font-size: 12px;
+  line-height: 1.4;
 }
 
-.custom-select-option:hover,
 .custom-select-option.is-selected {
   color: #fff;
   background: var(--primary);
+}
+
+.custom-select-option:not(.is-selected):hover {
+  color: var(--primary-dark);
+  background: #fde7ef;
 }
 
 .form-grid select,
@@ -1844,6 +1852,7 @@ button:disabled {
 }
 
 .lookup-result.is-success {
+  display: none;
   color: #328962;
   background: #f2fcf6;
   border-left-color: #62b88a;
@@ -2111,16 +2120,7 @@ button:disabled {
 }
 
 .flower-stem {
-  position: absolute;
-  bottom: 2px;
-  left: 58px;
-  z-index: 0;
-  width: 8px;
-  height: 74px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #4f9d70, #8bd19b);
-  transform: rotate(4deg);
-  transform-origin: bottom;
+  display: none;
 }
 
 .flower-leaf {

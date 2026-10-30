@@ -35,7 +35,7 @@ export function renderSpeaking() {
       </div>
       <div class="lookup-result" data-sentence-translation-result role="status" aria-live="polite"></div>
       <datalist id="sentence-topics"><option value="Giao tiếp hằng ngày"><option value="Giới thiệu bản thân"><option value="Du lịch"><option value="Mua sắm"><option value="Công việc"><option value="Học tập"></datalist>
-      <div class="speech-controls"><button class="secondary-button" data-sentence-action="speak-form" type="button">🔊 Phát âm</button><label>Giọng đọc<select name="voice"><option value="">Giọng mặc định</option></select></label><label>Tốc độ<input name="rate" type="range" min="0.5" max="2" step="0.1" value="1"></label></div>
+      <div class="speech-controls"><button class="secondary-button speech-image-button" data-sentence-action="speak-form" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><label>Giọng đọc<select name="voice"><option value="">Giọng mặc định</option></select></label><label>Tốc độ<input name="rate" type="range" min="0.5" max="2" step="0.1" value="1"></label></div>
       <div class="form-checks"><label><input name="favorite" type="checkbox"> Yêu thích</label></div>
       <div class="form-actions"><button class="secondary-button" data-sentence-action="cancel" type="button">Hủy</button><button class="primary-button" type="submit">Lưu câu</button></div>
     </form>

@@ -18,7 +18,7 @@ export function renderSettings() {
       <div class="speech-preferences">
         <label>Giọng đọc<select data-speech-voice><option value="">Giọng mặc định</option></select></label>
         <label>Tốc độ đọc <output data-speech-rate-value>1.0x</output><input data-speech-rate type="range" min="0.5" max="2" step="0.1" value="1"></label>
-        <button class="secondary-button" data-speech-action="preview" type="button">🔊 Nghe thử</button>
+        <button class="secondary-button speech-image-button" data-speech-action="preview" type="button" aria-label="Nghe thử"><img src="image/logo trên sidebar2.png" alt=""></button>
       </div>
       <p class="form-help">Lựa chọn này được áp dụng cho mọi lần phát âm trên ứng dụng và được lưu trên thiết bị.</p>
     </section>

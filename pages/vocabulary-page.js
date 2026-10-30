@@ -46,7 +46,7 @@ export function renderVocabulary() {
         <label class="wide-field">Ghi chú<input name="notes"></label>
       </div>
       <div class="lookup-result" data-lookup-result role="status" aria-live="polite"></div>
-      <div class="speech-controls"><button class="secondary-button" data-vocabulary-action="lookup" type="button">Tra cứu English</button><button class="secondary-button" data-vocabulary-action="speak-form" type="button">🔊 Phát âm</button><label>Giọng đọc<select name="voice"><option value="">Giọng mặc định</option></select></label><label>Tốc độ<input name="rate" type="range" min="0.5" max="2" step="0.1" value="1"></label></div>
+      <div class="speech-controls"><button class="secondary-button" data-vocabulary-action="lookup" type="button">Tra cứu English</button><button class="secondary-button speech-image-button" data-vocabulary-action="speak-form" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><label>Giọng đọc<select name="voice"><option value="">Giọng mặc định</option></select></label><label>Tốc độ<input name="rate" type="range" min="0.5" max="2" step="0.1" value="1"></label></div>
       <div class="form-checks"><label><input name="favorite" type="checkbox"> Yêu thích</label><label><input name="difficult" type="checkbox"> Từ khó</label><label><input name="dueForReview" type="checkbox"> Cần ôn</label></div>
       <div class="form-actions"><button class="secondary-button" data-vocabulary-action="cancel" type="button">Hủy</button><button class="primary-button" type="submit">Lưu từ</button></div>
     </form>
@@ -62,6 +62,6 @@ export function vocabularyRow(record) {
     <article class="vocabulary-row" data-vocabulary-id="${escapeHtml(record.id)}">
       <div class="word-main"><button class="favorite-button ${record.favorite ? 'is-favorite' : ''}" data-vocabulary-action="favorite" type="button" aria-label="${record.favorite ? 'Bỏ yêu thích' : 'Thêm yêu thích'}">${record.favorite ? '★' : '☆'}</button><div><h3>${escapeHtml(record.word)}</h3><p>${escapeHtml(record.pronunciation || 'Chưa có phiên âm')} · ${escapeHtml(record.meaning)}</p>${record.example ? `<small>“${escapeHtml(record.example)}”</small>` : ''}</div></div>
     <div class="word-meta">${record.memorized ? '<span class="word-status memorized">Đã nhớ</span>' : '<span class="word-status">Đang học</span>'}${record.difficult ? '<span class="word-status difficult">Từ khó</span>' : ''}${record.dueForReview ? '<span class="word-status review">Cần ôn</span>' : ''}</div>
-    <div class="row-actions"><button class="secondary-button" data-vocabulary-action="speak" type="button">🔊 Nghe</button><button class="icon-action" data-vocabulary-action="edit" type="button" aria-label="Sửa từ">✎</button><button class="icon-action danger" data-vocabulary-action="delete" type="button" aria-label="Xóa từ">×</button></div>
+    <div class="row-actions"><button class="secondary-button speech-image-button" data-vocabulary-action="speak" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><button class="icon-action" data-vocabulary-action="edit" type="button" aria-label="Sửa từ">✎</button><button class="icon-action danger" data-vocabulary-action="delete" type="button" aria-label="Xóa từ">×</button></div>
     </article>`;
 }

@@ -1,6 +1,6 @@
 {
-  "name": "Shin - Học tiếng Anh",
-  "short_name": "Shin học Anh",
+  "name": "App của Shin",
+  "short_name": "App của Shin",
   "description": "Ứng dụng học tiếng Anh cá nhân, hỗ trợ học ngoại tuyến.",
   "lang": "vi",
   "dir": "ltr",
@@ -12,9 +12,9 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "assets/icons/icon.svg",
+      "src": "assets/icons/favicon.png",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

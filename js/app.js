@@ -1,12 +1,13 @@
 import { Router } from './router.js';
 import { getDatabaseHealth, openDatabase, protectDatabaseStorage } from './db.js';
 import { renderHome } from '../pages/home.js';
-import { renderVocabulary } from '../pages/vocabulary-page.js';
+import { renderVocabulary, renderVocabularySet } from '../pages/vocabulary-page.js';
 import { renderStudy } from '../pages/study-page.js';
 import { renderSpeaking } from '../pages/speaking-page.js';
 import { renderProgress } from '../pages/progress-page.js';
 import { renderSettings } from '../pages/settings-page.js';
 import { initializeVocabularyPage } from './vocabulary.js';
+import { initializeVocabularySetPage } from './vocabulary.js';
 import { initializeStudyPage } from './study.js';
 import { initializeSpeakingPage } from './sentences.js';
 import { listDueVocabulary } from './review.js';
@@ -18,6 +19,7 @@ import { enhanceCustomSelects } from './custom-select.js';
 const routes = {
   home: { render: renderHome },
   vocabulary: { render: renderVocabulary },
+  'vocabulary-set': { render: () => renderVocabularySet(window.location.hash.slice('#vocabulary-set/'.length)) },
   study: { render: renderStudy },
   speaking: { render: renderSpeaking },
   progress: { render: renderProgress },
@@ -58,6 +60,9 @@ const router = new Router({
   onEnter: (route) => {
     if (route === 'vocabulary') {
       initializeVocabularyPage();
+    }
+    if (route === 'vocabulary-set') {
+      initializeVocabularySetPage();
     }
     if (route === 'study') {
       initializeStudyPage();

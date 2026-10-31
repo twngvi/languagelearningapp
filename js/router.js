@@ -17,9 +17,13 @@ export class Router {
 
   handleRouteChange() {
     const requestedRoute = window.location.hash.slice(1) || 'home';
-    const route = this.routes[requestedRoute] ? requestedRoute : 'home';
+    const route = this.routes[requestedRoute]
+      ? requestedRoute
+      : requestedRoute.startsWith('vocabulary-set/')
+        ? 'vocabulary-set'
+        : 'home';
 
-    if (requestedRoute !== route) {
+    if (requestedRoute !== route && route !== 'vocabulary-set') {
       window.history.replaceState(null, '', `#${route}`);
     }
 
@@ -36,8 +40,9 @@ export class Router {
   }
 
   updateNavigation(activeRoute) {
+    const navigationRoute = activeRoute === 'vocabulary-set' ? 'vocabulary' : activeRoute;
     document.querySelectorAll(this.navigationSelector).forEach((link) => {
-      const isActive = link.getAttribute('href') === `#${activeRoute}`;
+      const isActive = link.getAttribute('href') === `#${navigationRoute}`;
       link.classList.toggle('active', isActive);
       if (isActive) {
         link.setAttribute('aria-current', 'page');

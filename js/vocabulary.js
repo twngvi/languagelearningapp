@@ -17,18 +17,83 @@ export async function listVocabulary() {
   return records.sort((first, second) => first.word.localeCompare(second.word));
 }
 
-export function filterVocabulary(records, { query = '', wordSet = '', topic = '', favorite = false, difficult = false, due = false } = {}) {
+export async function initializeVocabularySetPage() {
+  const view = document.querySelector('#app-view');
+  const list = view.querySelector('[data-vocabulary-set-list]');
+  const setId = list?.dataset.setId;
+  if (!setId) throw new Error('Không xác định được bộ từ cần mở.');
+
+  const [records, wordSets] = await Promise.all([listVocabulary(), listWordSets()]);
+  const wordSet = wordSets.find((set) => set.id === setId);
+  if (!wordSet) {
+    view.querySelector('[data-vocabulary-set-title]').textContent = 'Không tìm thấy bộ từ';
+    list.innerHTML = '<p class="empty-state">Bộ từ này không còn tồn tại.</p>';
+    return;
+  }
+
+  const recordsById = new Map(records.map((record) => [record.id, record]));
+  const setRecords = wordSet.vocabularyIds.map((id) => recordsById.get(id)).filter(Boolean);
+  view.querySelector('[data-vocabulary-set-title]').textContent = wordSet.name;
+  const actions = view.querySelector('[data-vocabulary-set-actions]');
+  actions.hidden = false;
+  const search = view.querySelector('[data-vocabulary-set-search]');
+  const renderSetList = () => {
+    const visibleRecords = filterVocabulary(setRecords, { query: search.value });
+    view.querySelector('[data-vocabulary-set-count]').textContent = visibleRecords.length;
+    list.innerHTML = visibleRecords.length
+      ? visibleRecords.map(vocabularyRow).join('')
+      : `<p class="empty-state">${setRecords.length ? 'Không tìm thấy từ phù hợp.' : 'Bộ từ này chưa có từ nào.'}</p>`;
+  };
+  search.addEventListener('input', renderSetList);
+  renderSetList();
+
+  view.addEventListener('click', async (event) => {
+    const action = event.target.closest('[data-set-detail-action]')?.dataset.setDetailAction;
+    if (!action) return;
+    try {
+      if (action === 'bulk' || action === 'manage-sets' || action === 'new-word') {
+        sessionStorage.setItem('vocabulary-action', action === 'bulk' ? 'bulk' : action === 'manage-sets' ? 'sets' : 'new');
+        if (action === 'new-word') sessionStorage.setItem('vocabulary-action-set-id', wordSet.id);
+        window.location.hash = '#vocabulary';
+        return;
+      }
+      if (action === 'add-word' || action === 'manage') {
+        const selected = await showPrompt(`Nhập ID từ muốn thêm vào "${wordSet.name}".`);
+        if (selected) {
+          const vocabulary = records.find((record) => record.id === selected.trim());
+          if (!vocabulary) throw new Error('Không tìm thấy ID từ vựng này.');
+          await addVocabularyToSet(wordSet.id, vocabulary.id);
+          window.location.reload();
+        }
+      }
+      if (action === 'edit') {
+        const name = await showPrompt('Tên bộ từ mới:', { defaultValue: wordSet.name });
+        if (!name) return;
+        const description = await showPrompt('Mô tả bộ từ:', { defaultValue: wordSet.description || '' });
+        await editWordSet({ ...wordSet, name, description: description || '' });
+        window.location.reload();
+      }
+      if (action === 'delete' && await showConfirm(`Xóa bộ từ "${wordSet.name}"? Từ vựng sẽ vẫn được giữ lại.`, {
+        title: 'Xóa bộ từ?',
+        confirmLabel: 'Xóa bộ từ',
+      })) {
+        await removeWordSet(wordSet.id);
+        window.location.hash = '#vocabulary';
+      }
+    } catch (error) {
+      console.error('Không thể cập nhật bộ từ:', error);
+      await showAlert(`Không thể cập nhật bộ từ: ${error.message}`);
+    }
+  });
+}
+
+export function filterVocabulary(records, { query = '' } = {}) {
   const normalizedQuery = query.trim().toLocaleLowerCase();
   return records.filter((record) => {
     const searchable = vocabularyFields
       .map((field) => String(record[field] || '').toLocaleLowerCase())
       .join(' ');
-    return (!normalizedQuery || searchable.includes(normalizedQuery))
-      && (!wordSet || (record.wordSetIds || []).includes(wordSet) || record.wordSet === wordSet)
-      && (!topic || record.topic === topic)
-      && (!favorite || record.favorite === true)
-      && (!difficult || record.difficult === true)
-      && (!due || record.dueForReview === true);
+    return !normalizedQuery || searchable.includes(normalizedQuery);
   });
 }
 
@@ -162,25 +227,12 @@ async function translateText(text, languagePair, signal) {
   return translation.replace(/^[.,!?;:]+|[.,!?;:]+$/g, '').trim();
 }
 
-function populateFilter(select, values) {
-  const currentValue = select.value;
-  select.innerHTML = `<option value="">${select.dataset.vocabularyFilter === 'wordSet' ? 'Tất cả bộ từ' : 'Tất cả chủ đề'}</option>`;
-  values.filter(Boolean).sort().forEach((value) => {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = value;
-    select.append(option);
-  });
-  select.value = currentValue;
-}
-
 export async function initializeVocabularyPage() {
   const view = document.querySelector('#app-view');
   let records = [];
   let wordSets = [];
   let editingId = null;
 
-  const list = view.querySelector('[data-vocabulary-list]');
   const form = view.querySelector('[data-vocabulary-form]');
   const bulkForm = view.querySelector('[data-bulk-form]');
   const setForm = view.querySelector('[data-set-form]');
@@ -194,39 +246,15 @@ export async function initializeVocabularyPage() {
   let lastAutoPronunciation = '';
   let translationDirection = 'en-vi';
   let selectedWordSetIds = [];
-  const renderList = () => {
-    if (!view.querySelector('[data-vocabulary-search]')) return;
-    const filters = {
-      query: view.querySelector('[data-vocabulary-search]').value,
-      wordSet: view.querySelector('[data-vocabulary-filter="wordSet"]').value,
-      topic: view.querySelector('[data-vocabulary-filter="topic"]').value,
-      favorite: view.querySelector('[data-vocabulary-filter="favorite"]').checked,
-      difficult: view.querySelector('[data-vocabulary-filter="difficult"]').checked,
-      due: view.querySelector('[data-vocabulary-filter="due"]').checked,
-    };
-    const visibleRecords = filterVocabulary(records, filters);
-    view.querySelector('[data-vocabulary-count]').textContent = visibleRecords.length;
-    list.innerHTML = visibleRecords.length
-      ? visibleRecords.map(vocabularyRow).join('')
-      : '<p class="empty-state">Chưa có từ phù hợp. Hãy thêm một từ mới để bắt đầu.</p>';
-  };
-
   const load = async () => {
     records = await listVocabulary();
     wordSets = await listWordSets();
-    populateFilter(view.querySelector('[data-vocabulary-filter="wordSet"]'), wordSets.map((set) => set.id));
-    [...view.querySelector('[data-vocabulary-filter="wordSet"]').options].forEach((option) => {
-      const set = wordSets.find((item) => item.id === option.value);
-      if (set) option.textContent = set.name;
-    });
-    populateFilter(view.querySelector('[data-vocabulary-filter="topic"]'), [...new Set(records.map((record) => record.topic))]);
     renderWordSetPicker();
     setList.innerHTML = wordSets.length ? wordSets.map((set) => `
       <article class="word-set-card" data-set-id="${set.id}">
-        <div><h3>${set.name}</h3><p>${set.description || 'Chưa có mô tả'} · ${set.vocabularyIds.length} từ</p><div class="set-members">${set.vocabularyIds.map((id) => { const member = records.find((item) => item.id === id); return member ? `<span>${member.word}<button data-set-action="remove-word" data-vocabulary-id="${id}" type="button" aria-label="Xóa ${member.word} khỏi bộ">×</button></span>` : ''; }).join('')}</div></div>
-        <div class="row-actions"><button class="secondary-button" data-set-action="add-word" type="button">+ Thêm từ</button><button class="secondary-button" data-set-action="manage" type="button">Quản lý từ</button><button class="icon-action" data-set-action="edit" type="button">✎</button><button class="icon-action danger" data-set-action="delete" type="button">×</button></div>
+        <div class="word-set-card-content" data-set-open><h3>${set.name}</h3><p>${set.description || 'Chưa có mô tả'} · ${set.vocabularyIds.length} từ</p><div class="set-members">${set.vocabularyIds.map((id) => { const member = records.find((item) => item.id === id); return member ? `<span>${member.word}<button class="delete-image-button" data-set-action="remove-word" data-vocabulary-id="${id}" type="button" aria-label="Xóa ${member.word} khỏi bộ"><img src="image/nút xóa.png" alt=""></button></span>` : ''; }).join('')}</div></div>
+        <div class="row-actions"><button class="secondary-button" data-set-action="add-word" type="button">+ Thêm từ</button><button class="secondary-button" data-set-action="manage" type="button">Quản lý từ</button><button class="icon-action edit-image-button" data-set-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-set-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button></div>
       </article>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>';
-    renderList();
   };
 
   const renderWordSetPicker = () => {
@@ -300,8 +328,6 @@ export async function initializeVocabularyPage() {
     form.hidden = true;
   };
 
-  view.addEventListener('input', renderList);
-  view.addEventListener('change', renderList);
   form.querySelector('[data-vocabulary-action="swap-language"]').addEventListener('click', () => {
     const wordInput = form.querySelector('[name="word"]');
     const meaningInput = form.querySelector('[name="meaning"]');
@@ -510,6 +536,11 @@ export async function initializeVocabularyPage() {
   });
 
   view.addEventListener('click', async (event) => {
+    const setOpenTarget = event.target.closest('[data-set-open]');
+    if (setOpenTarget && !event.target.closest('[data-set-action]')) {
+      window.location.hash = `#vocabulary-set/${setOpenTarget.closest('[data-set-id]').dataset.setId}`;
+      return;
+    }
     const actionElement = event.target.closest('[data-set-action]');
     if (!actionElement) return;
     const setCard = actionElement.closest('[data-set-id]');
@@ -621,4 +652,20 @@ export async function initializeVocabularyPage() {
   });
 
   await load();
+
+  const pendingAction = sessionStorage.getItem('vocabulary-action');
+  if (pendingAction) {
+    sessionStorage.removeItem('vocabulary-action');
+    if (pendingAction === 'bulk') bulkForm.hidden = false;
+    if (pendingAction === 'sets') setForm.hidden = false;
+    if (pendingAction === 'new') {
+      const setId = sessionStorage.getItem('vocabulary-action-set-id');
+      sessionStorage.removeItem('vocabulary-action-set-id');
+      showForm();
+      if (setId && wordSets.some((set) => set.id === setId)) {
+        selectedWordSetIds = [setId];
+        renderWordSetPicker();
+      }
+    }
+  }
 }

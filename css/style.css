@@ -1616,18 +1616,22 @@ button:disabled {
 
 .word-set-list {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
 }
 
 .word-set-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 15px;
-  padding: 16px 18px;
+  min-width: 0;
+  min-height: 150px;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(150, 91, 117, 0.06);
 }
 
 .word-set-card h3 {
@@ -1639,6 +1643,43 @@ button:disabled {
   margin: 0;
   color: var(--muted);
   font-size: 11px;
+}
+
+.word-set-card > div:first-child {
+  width: 100%;
+}
+
+.word-set-card-content {
+  cursor: pointer;
+}
+
+.word-set-card-content:hover h3 {
+  color: var(--primary-dark);
+}
+
+.word-set-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.word-set-detail-actions[hidden] {
+  display: none;
+}
+
+.word-set-card .row-actions {
+  width: 100%;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.word-sets-section .word-set-card > .row-actions {
+  display: none;
+}
+
+.word-set-card .row-actions .secondary-button {
+  flex: 1 1 auto;
 }
 
 .set-members {
@@ -1771,10 +1812,7 @@ button:disabled {
   gap: 13px;
 }
 
-.word-set-card {
-  align-items: flex-start;
-  flex-direction: column;
-}
+
 
 .form-grid label {
   display: grid;
@@ -1947,6 +1985,10 @@ button:disabled {
   gap: 10px;
 }
 
+.vocabulary-set-page .row-actions {
+  display: none;
+}
+
 .vocabulary-row {
   display: flex;
   align-items: center;
@@ -2027,17 +2069,56 @@ button:disabled {
 }
 
 .icon-action {
-  width: 29px;
-  height: 29px;
+  display: inline-flex;
+  width: 44px;
+  min-width: 44px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
   background: transparent;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 9px;
+  font-size: 16px;
 }
 
 .icon-action.danger:hover {
   color: #c44d5b;
   border-color: #f0cbd0;
+}
+
+.delete-image-button {
+  padding: 2px;
+}
+
+.delete-image-button img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.edit-image-button {
+  padding: 2px;
+}
+
+.edit-image-button img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.set-members .delete-image-button {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+}
+
+.set-members .delete-image-button img {
+  width: 24px;
+  height: 24px;
 }
 
 .empty-state {

@@ -1616,14 +1616,15 @@ button:disabled {
 
 .word-set-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 220px));
+  justify-content: start;
   gap: 14px;
 }
 
 .word-set-card {
   display: flex;
   min-width: 0;
-  min-height: 150px;
+  min-height: 260px;
   align-items: flex-start;
   flex-direction: column;
   gap: 12px;
@@ -1632,24 +1633,29 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(150, 91, 117, 0.06);
+  aspect-ratio: 4 / 5;
 }
 
 .word-set-card h3 {
   margin: 0 0 3px;
-  font-size: 15px;
+  overflow-wrap: anywhere;
+  font-size: 16px;
 }
 
 .word-set-card p {
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 11px;
 }
 
 .word-set-card > div:first-child {
   width: 100%;
+  min-width: 0;
 }
 
 .word-set-card-content {
+  min-width: 0;
   cursor: pointer;
 }
 

@@ -6,9 +6,9 @@ import {
   updateRecord,
 } from './db.js';
 import { vocabularyRow } from '../pages/vocabulary-page.js';
-import { addVocabularyToSet, listWordSets, parseBulkVocabulary, removeVocabularyFromSet, removeWordSet, saveWordSet, editWordSet } from './word-sets.js';
+import { addVocabularyToSet, listWordSets, normalizeWordSetColor, parseBulkVocabulary, removeVocabularyFromSet, removeWordSet, saveWordSet, editWordSet } from './word-sets.js';
 import { populateVoiceSelect, speakText } from './speech.js';
-import { showAlert, showConfirm, showPrompt } from './notifications.js';
+import { showAlert, showConfirm, showSelectPrompt, showPrompt } from './notifications.js';
 
 export const vocabularyFields = ['word', 'meaning', 'pronunciation', 'example', 'notes'];
 
@@ -24,7 +24,7 @@ export async function initializeVocabularySetPage() {
   if (!setId) throw new Error('Không xác định được bộ từ cần mở.');
 
   const [records, wordSets] = await Promise.all([listVocabulary(), listWordSets()]);
-  const wordSet = wordSets.find((set) => set.id === setId);
+  let wordSet = wordSets.find((set) => set.id === setId);
   if (!wordSet) {
     view.querySelector('[data-vocabulary-set-title]').textContent = 'Không tìm thấy bộ từ';
     list.innerHTML = '<p class="empty-state">Bộ từ này không còn tồn tại.</p>';
@@ -33,45 +33,164 @@ export async function initializeVocabularySetPage() {
 
   const recordsById = new Map(records.map((record) => [record.id, record]));
   const setRecords = wordSet.vocabularyIds.map((id) => recordsById.get(id)).filter(Boolean);
-  view.querySelector('[data-vocabulary-set-title]').textContent = wordSet.name;
-  const actions = view.querySelector('[data-vocabulary-set-actions]');
-  actions.hidden = false;
+  const setTitle = view.querySelector('[data-vocabulary-set-title]');
+  setTitle.firstChild.textContent = `${wordSet.name} `;
+  const detailForm = view.querySelector('[data-set-detail-form]');
+  const detailVocabularyForm = view.querySelector('[data-detail-vocabulary-form]');
+  const detailBulkForm = view.querySelector('[data-detail-bulk-form]');
+  const detailPage = view.querySelector('.vocabulary-set-page');
+  const selectionToolbar = view.querySelector('[data-vocabulary-selection-toolbar]');
+  const selectedCount = view.querySelector('[data-vocabulary-selected-count]');
+  const selectedVocabularyIds = new Set();
+  let editingDetailId = '';
+  const syncDetailColor = (color) => {
+    const normalizedColor = normalizeWordSetColor(color);
+    detailForm.querySelector('[name="color"]').value = normalizedColor;
+    detailForm.querySelectorAll('[data-detail-set-color]').forEach((swatch) => {
+      const selected = swatch.dataset.detailSetColor === normalizedColor;
+      swatch.classList.toggle('is-selected', selected);
+      swatch.setAttribute('aria-pressed', String(selected));
+    });
+  };
+  detailPage.style.setProperty('--set-color', normalizeWordSetColor(wordSet.color));
   const search = view.querySelector('[data-vocabulary-set-search]');
   const renderSetList = () => {
     const visibleRecords = filterVocabulary(setRecords, { query: search.value });
     view.querySelector('[data-vocabulary-set-count]').textContent = visibleRecords.length;
+    selectedVocabularyIds.forEach((id) => {
+      if (!setRecords.some((record) => record.id === id)) selectedVocabularyIds.delete(id);
+    });
     list.innerHTML = visibleRecords.length
-      ? visibleRecords.map(vocabularyRow).join('')
+      ? visibleRecords.map((record) => vocabularyRow(record, { selectable: true })).join('')
       : `<p class="empty-state">${setRecords.length ? 'Không tìm thấy từ phù hợp.' : 'Bộ từ này chưa có từ nào.'}</p>`;
+    selectionToolbar.hidden = selectedVocabularyIds.size === 0;
+    selectedCount.textContent = `${selectedVocabularyIds.size} từ`;
   };
   search.addEventListener('input', renderSetList);
   renderSetList();
 
   view.addEventListener('click', async (event) => {
+    const selectionAction = event.target.closest('[data-set-detail-action]')?.dataset.setDetailAction;
+    if (selectionAction === 'select-all') {
+      const visibleRecords = filterVocabulary(setRecords, { query: search.value });
+      const allSelected = visibleRecords.length > 0 && visibleRecords.every((record) => selectedVocabularyIds.has(record.id));
+      visibleRecords.forEach((record) => {
+        if (allSelected) selectedVocabularyIds.delete(record.id);
+        else selectedVocabularyIds.add(record.id);
+      });
+      renderSetList();
+      return;
+    }
+    if (selectionAction === 'delete-selected' || selectionAction === 'move-selected') {
+      const selectedRecords = setRecords.filter((record) => selectedVocabularyIds.has(record.id));
+      if (!selectedRecords.length) return;
+      try {
+        if (selectionAction === 'delete-selected') {
+          if (!await showConfirm(`Xóa ${selectedRecords.length} từ khỏi bộ "${wordSet.name}"? Dữ liệu từ vựng vẫn được giữ lại.`, {
+            title: 'Xóa từ đã chọn?',
+            confirmLabel: 'Xóa khỏi bộ',
+          })) return;
+          for (const record of selectedRecords) await removeVocabularyFromSet(wordSet.id, record.id);
+        } else {
+          const otherSets = wordSets.filter((set) => set.id !== wordSet.id);
+          if (!otherSets.length) {
+            await showAlert('Bạn cần có một bộ từ khác để di chuyển.');
+            return;
+          }
+          const targetId = await showSelectPrompt('Chọn bộ từ muốn chuyển các từ đã chọn đến:', {
+            title: 'Di chuyển từ đã chọn',
+            options: otherSets.map((set) => ({ value: set.id, label: set.name })),
+          });
+          if (!targetId) return;
+          const targetSet = otherSets.find((set) => set.id === targetId);
+          if (!targetSet) {
+            await showAlert('Không tìm thấy bộ từ đích.');
+            return;
+          }
+          for (const record of selectedRecords) {
+            await addVocabularyToSet(targetSet.id, record.id);
+            await removeVocabularyFromSet(wordSet.id, record.id);
+          }
+        }
+        selectedRecords.forEach((record) => {
+          const index = setRecords.findIndex((item) => item.id === record.id);
+          if (index >= 0) setRecords.splice(index, 1);
+          selectedVocabularyIds.delete(record.id);
+        });
+        renderSetList();
+      } catch (error) {
+        console.error('Không thể xử lý các từ đã chọn:', error);
+        await showAlert(`Không thể xử lý các từ đã chọn: ${error.message}`);
+      }
+      return;
+    }
+    const vocabularyAction = event.target.closest('[data-vocabulary-action]')?.dataset.vocabularyAction;
+    if (vocabularyAction) {
+      const row = event.target.closest('[data-vocabulary-id]');
+      const record = row ? setRecords.find((item) => item.id === row.dataset.vocabularyId) : null;
+      if (vocabularyAction === 'speak' && record) {
+        speakText(record.word);
+        return;
+      }
+      if (vocabularyAction === 'edit' && record) {
+        editingDetailId = record.id;
+        detailBulkForm.hidden = true;
+        detailVocabularyForm.hidden = false;
+        detailVocabularyForm.reset();
+        [...detailVocabularyForm.elements].forEach((element) => {
+          if (!element.name || element.name === 'id') return;
+          if (element.type === 'checkbox') element.checked = Boolean(record[element.name]);
+          else element.value = record[element.name] || '';
+        });
+        detailVocabularyForm.querySelector('[name="id"]').value = record.id;
+        detailVocabularyForm.querySelector('[name="word"]').focus();
+        return;
+      }
+      if (vocabularyAction === 'delete' && record && await showConfirm(`Xóa từ "${record.word}" khỏi bộ từ này?`, {
+        title: 'Xóa từ khỏi bộ?',
+        confirmLabel: 'Xóa từ',
+      })) {
+        await removeVocabularyFromSet(wordSet.id, record.id);
+        const index = setRecords.findIndex((item) => item.id === record.id);
+        if (index >= 0) setRecords.splice(index, 1);
+        renderSetList();
+        return;
+      }
+    }
     const action = event.target.closest('[data-set-detail-action]')?.dataset.setDetailAction;
     if (!action) return;
     try {
-      if (action === 'bulk' || action === 'manage-sets' || action === 'new-word') {
-        sessionStorage.setItem('vocabulary-action', action === 'bulk' ? 'bulk' : action === 'manage-sets' ? 'sets' : 'new');
-        if (action === 'new-word') sessionStorage.setItem('vocabulary-action-set-id', wordSet.id);
-        window.location.hash = '#vocabulary';
-        return;
+      if (action === 'bulk') {
+        detailVocabularyForm.hidden = true;
+        detailBulkForm.hidden = false;
+        detailBulkForm.querySelector('[name="bulkText"]').focus();
       }
-      if (action === 'add-word' || action === 'manage') {
-        const selected = await showPrompt(`Nhập ID từ muốn thêm vào "${wordSet.name}".`);
-        if (selected) {
-          const vocabulary = records.find((record) => record.id === selected.trim());
-          if (!vocabulary) throw new Error('Không tìm thấy ID từ vựng này.');
-          await addVocabularyToSet(wordSet.id, vocabulary.id);
-          window.location.reload();
-        }
+      if (action === 'new-word') {
+        detailBulkForm.hidden = true;
+        detailVocabularyForm.hidden = false;
+        editingDetailId = '';
+        detailVocabularyForm.reset();
+        detailVocabularyForm.querySelector('[name="word"]').focus();
       }
       if (action === 'edit') {
-        const name = await showPrompt('Tên bộ từ mới:', { defaultValue: wordSet.name });
-        if (!name) return;
-        const description = await showPrompt('Mô tả bộ từ:', { defaultValue: wordSet.description || '' });
-        await editWordSet({ ...wordSet, name, description: description || '' });
-        window.location.reload();
+        detailForm.hidden = false;
+        detailForm.querySelector('[name="id"]').value = wordSet.id;
+        detailForm.querySelector('[name="name"]').value = wordSet.name;
+        detailForm.querySelector('[name="description"]').value = wordSet.description || '';
+        syncDetailColor(wordSet.color);
+      }
+      if (action === 'cancel-edit') {
+        detailForm.reset();
+        detailForm.hidden = true;
+      }
+      if (action === 'cancel-new-word') {
+        detailVocabularyForm.reset();
+        editingDetailId = '';
+        detailVocabularyForm.hidden = true;
+      }
+      if (action === 'cancel-bulk') {
+        detailBulkForm.reset();
+        detailBulkForm.hidden = true;
       }
       if (action === 'delete' && await showConfirm(`Xóa bộ từ "${wordSet.name}"? Từ vựng sẽ vẫn được giữ lại.`, {
         title: 'Xóa bộ từ?',
@@ -84,6 +203,217 @@ export async function initializeVocabularySetPage() {
       console.error('Không thể cập nhật bộ từ:', error);
       await showAlert(`Không thể cập nhật bộ từ: ${error.message}`);
     }
+  });
+
+  view.addEventListener('change', (event) => {
+    const checkbox = event.target.closest('[data-vocabulary-select]');
+    if (checkbox) {
+      if (checkbox.checked) selectedVocabularyIds.add(checkbox.dataset.vocabularySelect);
+      else selectedVocabularyIds.delete(checkbox.dataset.vocabularySelect);
+      renderSetList();
+      return;
+    }
+  });
+
+  detailForm.addEventListener('click', (event) => {
+    const swatch = event.target.closest('[data-detail-set-color]');
+    if (!swatch) return;
+    detailForm.querySelector('[name="color"]').value = swatch.dataset.detailSetColor;
+    detailForm.querySelectorAll('[data-detail-set-color]').forEach((item) => {
+      const selected = item === swatch;
+      item.classList.toggle('is-selected', selected);
+      item.setAttribute('aria-pressed', String(selected));
+    });
+  });
+
+  detailForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const input = Object.fromEntries(new FormData(detailForm).entries());
+      wordSet = await editWordSet({ ...wordSet, ...input, id: wordSet.id });
+      setTitle.firstChild.textContent = `${wordSet.name} `;
+      detailPage.style.setProperty('--set-color', normalizeWordSetColor(wordSet.color));
+      detailForm.hidden = true;
+    } catch (error) {
+      console.error('Không thể lưu chỉnh sửa bộ từ:', error);
+      await showAlert(`Không thể lưu chỉnh sửa bộ từ: ${error.message}`);
+    }
+  });
+
+  detailVocabularyForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const input = Object.fromEntries([...detailVocabularyForm.elements]
+        .filter((element) => element.name)
+        .map((element) => [element.name, element.type === 'checkbox' ? element.checked : element.value]));
+      input.wordSet = wordSet.name;
+      input.wordSetIds = [wordSet.id];
+      const savedRecord = editingDetailId
+        ? await editVocabulary({ ...input, id: editingDetailId })
+        : await saveVocabulary(input);
+      if (!editingDetailId) {
+        await addVocabularyToSet(wordSet.id, savedRecord.id);
+        setRecords.push(savedRecord);
+      } else {
+        const index = setRecords.findIndex((item) => item.id === editingDetailId);
+        if (index >= 0) setRecords[index] = savedRecord;
+      }
+      renderSetList();
+      detailVocabularyForm.reset();
+      editingDetailId = '';
+      detailVocabularyForm.hidden = true;
+    } catch (error) {
+      console.error('Không thể thêm từ vào bộ từ:', error);
+      await showAlert(`Không thể thêm từ vào bộ từ: ${error.message}`);
+    }
+  });
+
+  const detailWordInput = detailVocabularyForm.querySelector('[name="word"]');
+  const detailMeaningInput = detailVocabularyForm.querySelector('[name="meaning"]');
+  const detailPronunciationInput = detailVocabularyForm.querySelector('[name="pronunciation"]');
+  let detailTranslationTimer;
+  let detailTranslationController;
+  let detailPronunciationTimer;
+  let detailPronunciationController;
+  let detailLastAutoValue = '';
+  const fillDetailPronunciation = async (english, source, sourceInput) => {
+    detailPronunciationController = new AbortController();
+    try {
+      const result = await lookupEnglishWord(english, detailPronunciationController.signal);
+      if (sourceInput.value.trim() === source && result.pronunciation) {
+        detailPronunciationInput.value = result.pronunciation;
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') console.info('Chưa thể tự động điền phiên âm:', error.message);
+    }
+  };
+  const translateDetailWord = (sourceInput, targetInput, languagePair) => {
+    const source = sourceInput.value.trim();
+    clearTimeout(detailTranslationTimer);
+    detailTranslationController?.abort();
+    clearTimeout(detailPronunciationTimer);
+    detailPronunciationController?.abort();
+    if (!source || source.length < 2 || (targetInput.value && targetInput.value !== detailLastAutoValue)) return;
+    detailTranslationTimer = setTimeout(async () => {
+      detailTranslationController = new AbortController();
+      try {
+        const translation = languagePair === 'en|vi'
+          ? await translateEnglishWord(source, detailTranslationController.signal)
+          : await translateVietnameseWord(source, detailTranslationController.signal);
+        if (sourceInput.value.trim() !== source) return;
+        targetInput.value = translation;
+        detailLastAutoValue = translation;
+        if (languagePair === 'vi|en') await fillDetailPronunciation(translation, source, sourceInput);
+      } catch (error) {
+        if (error.name !== 'AbortError') console.info('Chưa thể tự động dịch từ:', error.message);
+      }
+    }, 800);
+    if (languagePair === 'en|vi') {
+      detailPronunciationTimer = setTimeout(() => fillDetailPronunciation(source, source, sourceInput), 900);
+    }
+  };
+  detailWordInput.addEventListener('input', () => {
+    detailLastAutoValue = detailMeaningInput.value;
+    translateDetailWord(detailWordInput, detailMeaningInput, 'en|vi');
+  });
+  detailMeaningInput.addEventListener('input', () => {
+    detailLastAutoValue = detailWordInput.value;
+    translateDetailWord(detailMeaningInput, detailWordInput, 'vi|en');
+  });
+
+  detailBulkForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const preview = parseBulkVocabulary(new FormData(detailBulkForm).get('bulkText'));
+      const invalid = preview.filter((item) => item.error);
+      const valid = preview.filter((item) => item.data);
+      if (invalid.length) {
+        await showAlert(`Dòng không hợp lệ: ${invalid.map((item) => item.line).join(', ')}`, {
+          title: 'Chưa thể nhập dữ liệu',
+        });
+        return;
+      }
+      const existingWords = new Set(setRecords.map((record) => record.word.toLocaleLowerCase()));
+      const lookupBulkPronunciation = async (word) => {
+        try {
+          const result = await lookupEnglishWord(word);
+          if (result.pronunciation) return result.pronunciation;
+        } catch (error) {
+          if (!/\s/.test(word)) throw error;
+        }
+        if (!/\s/.test(word)) return '';
+        const parts = [];
+        for (const part of word.split(/\s+/)) {
+          try {
+            const result = await lookupEnglishWord(part);
+            if (result.pronunciation) parts.push(result.pronunciation.replace(/^\/|\/$/g, ''));
+          } catch (error) {
+            console.info(`Chưa thể tự động điền phiên âm cho "${part}":`, error.message);
+          }
+        }
+        return parts.length ? `/${parts.join(' ')}/` : '';
+      };
+      for (const item of valid) {
+        if (existingWords.has(item.data.word.toLocaleLowerCase())) continue;
+        let pronunciation = '';
+        try {
+          pronunciation = await lookupBulkPronunciation(item.data.word);
+        } catch (error) {
+          console.info(`Chưa thể tự động điền phiên âm cho "${item.data.word}":`, error.message);
+        }
+        const savedRecord = await saveVocabulary({
+          ...item.data,
+          pronunciation,
+          wordSet: wordSet.name,
+          wordSetIds: [wordSet.id],
+        });
+        await addVocabularyToSet(wordSet.id, savedRecord.id);
+        setRecords.push(savedRecord);
+        existingWords.add(savedRecord.word.toLocaleLowerCase());
+      }
+      renderSetList();
+      detailBulkForm.reset();
+      detailBulkForm.hidden = true;
+    } catch (error) {
+      console.error('Không thể nhập từ hàng loạt vào bộ từ:', error);
+      await showAlert(`Không thể nhập từ hàng loạt: ${error.message}`);
+    }
+  });
+
+  const title = view.querySelector('[data-vocabulary-set-title]');
+  title.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.className = 'inline-set-title-input';
+    input.value = wordSet.name;
+    input.setAttribute('aria-label', 'Tên bộ từ');
+    title.replaceWith(input);
+    input.focus();
+    input.select();
+    const finish = async (save) => {
+      if (!input.isConnected) return;
+      const name = input.value.trim();
+      if (save && name && name !== wordSet.name) {
+        try {
+          wordSet = await editWordSet({ ...wordSet, name });
+        } catch (error) {
+          console.error('Không thể đổi tên bộ từ:', error);
+          await showAlert(`Không thể đổi tên bộ từ: ${error.message}`);
+        }
+      }
+      input.replaceWith(title);
+      title.firstChild.textContent = `${wordSet.name} `;
+    };
+    input.addEventListener('blur', () => finish(true), { once: true });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        input.blur();
+      }
+      if (event.key === 'Escape') {
+        input.value = wordSet.name;
+        input.blur();
+      }
+    });
   });
 }
 
@@ -218,7 +548,12 @@ async function translateText(text, languagePair, signal) {
   const [sourceLanguage, targetLanguage] = languagePair.split('|');
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(normalizedText)}`;
   const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Nguồn dịch trả về lỗi HTTP ${response.status}.`);
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Nguồn dịch trả về lỗi HTTP 429.');
+    }
+    throw new Error(`Nguồn dịch trả về lỗi HTTP ${response.status}.`);
+  }
   const result = await response.json();
   const translation = Array.isArray(result[0])
     ? result[0].map((part) => part?.[0] || '').join('').trim()
@@ -245,13 +580,30 @@ export async function initializeVocabularyPage() {
   let lastAutoMeaning = '';
   let lastAutoPronunciation = '';
   let translationDirection = 'en-vi';
+  let translationBlockedUntil = 0;
   let selectedWordSetIds = [];
+  const syncSetColorPalette = (color) => {
+    const normalizedColor = normalizeWordSetColor(color);
+    setForm.querySelector('[name="color"]').value = normalizedColor;
+    setForm.querySelectorAll('[data-set-color]').forEach((swatch) => {
+      const selected = swatch.dataset.setColor === normalizedColor;
+      swatch.classList.toggle('is-selected', selected);
+      swatch.setAttribute('aria-pressed', String(selected));
+    });
+  };
+  const hideSetForm = ({ reset = false } = {}) => {
+    if (reset) {
+      setForm.reset();
+      syncSetColorPalette('#f6c1d1');
+    }
+    setForm.hidden = true;
+  };
   const load = async () => {
     records = await listVocabulary();
     wordSets = await listWordSets();
     renderWordSetPicker();
     setList.innerHTML = wordSets.length ? wordSets.map((set) => `
-      <article class="word-set-card" data-set-id="${set.id}">
+      <article class="word-set-card" data-set-id="${set.id}" style="--set-color: ${normalizeWordSetColor(set.color)}">
         <div class="word-set-card-content" data-set-open><h3>${set.name}</h3><p>${set.description || 'Chưa có mô tả'} · ${set.vocabularyIds.length} từ</p><div class="set-members">${set.vocabularyIds.map((id) => { const member = records.find((item) => item.id === id); return member ? `<span>${member.word}<button class="delete-image-button" data-set-action="remove-word" data-vocabulary-id="${id}" type="button" aria-label="Xóa ${member.word} khỏi bộ"><img src="image/nút xóa.png" alt=""></button></span>` : ''; }).join('')}</div></div>
         <div class="row-actions"><button class="secondary-button" data-set-action="add-word" type="button">+ Thêm từ</button><button class="secondary-button" data-set-action="manage" type="button">Quản lý từ</button><button class="icon-action edit-image-button" data-set-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-set-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button></div>
       </article>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>';
@@ -376,13 +728,19 @@ export async function initializeVocabularyPage() {
 
     clearTimeout(translationTimer);
     translationController?.abort();
-    if (!word) {
+    if (!word || word.length < 2) {
       if (meaningInput.value === lastAutoMeaning) meaningInput.value = '';
       lastAutoMeaning = '';
       if (lookupResult.dataset.lookupType === 'translation') lookupResult.textContent = '';
       return;
     }
     if (meaningInput.value && meaningInput.value !== lastAutoMeaning) return;
+    if (Date.now() < translationBlockedUntil) {
+      lookupResult.dataset.lookupType = 'translation';
+      lookupResult.className = 'lookup-result is-error';
+      lookupResult.textContent = 'Dịch tự động đang tạm giới hạn. Bạn có thể nhập nghĩa tiếng Việt thủ công.';
+      return;
+    }
 
     translationTimer = setTimeout(async () => {
       translationController = new AbortController();
@@ -408,9 +766,14 @@ export async function initializeVocabularyPage() {
         if (error.name === 'AbortError') return;
         console.error('Không thể tự động dịch từ vựng:', error);
         lookupResult.className = 'lookup-result is-error';
-        lookupResult.textContent = `Chưa thể tự động gợi ý nghĩa: ${error.message}`;
+          if (error.message.includes('HTTP 429')) {
+            translationBlockedUntil = Date.now() + 30000;
+            lookupResult.textContent = 'Dịch tự động đang tạm giới hạn trong 30 giây. Bạn có thể nhập nghĩa tiếng Việt thủ công.';
+          } else {
+            lookupResult.textContent = `Chưa thể tự động gợi ý nghĩa: ${error.message}`;
+          }
       }
-    }, 500);
+    }, 800);
   });
   form.querySelector('[name="meaning"]').addEventListener('input', (event) => {
     if (event.target.value !== lastAutoMeaning) lastAutoMeaning = '';
@@ -523,17 +886,33 @@ export async function initializeVocabularyPage() {
         return;
       }
       if (action === 'bulk') bulkForm.hidden = false;
-      if (action === 'sets') setForm.hidden = false;
+      if (action === 'sets') {
+        setForm.reset();
+        syncSetColorPalette('#f6c1d1');
+        setForm.hidden = false;
+      }
       if (action === 'cancel-bulk') bulkForm.hidden = true;
       if (action === 'cancel-set') {
-        setForm.reset();
-        setForm.hidden = true;
+        hideSetForm({ reset: true });
       }
     } catch (error) {
       console.error('Không thể cập nhật kho từ vựng:', error);
       await showAlert(`Không thể cập nhật từ vựng: ${error.message}`);
     }
   });
+
+  view.addEventListener('click', (event) => {
+    if (
+      !setForm.hidden
+      && !setForm.contains(event.target)
+      && !event.target.closest('[data-vocabulary-action="sets"]')
+      && !event.target.closest('[data-set-action="edit"]')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      hideSetForm();
+    }
+  }, true);
 
   view.addEventListener('click', async (event) => {
     const setOpenTarget = event.target.closest('[data-set-open]');
@@ -552,6 +931,7 @@ export async function initializeVocabularyPage() {
         setForm.querySelector('[name="id"]').value = set.id;
         setForm.querySelector('[name="name"]').value = set.name;
         setForm.querySelector('[name="description"]').value = set.description;
+        syncSetColorPalette(set.color);
       }
       if (actionElement.dataset.setAction === 'delete' && await showConfirm(`Xóa bộ từ "${set.name}"? Từ vựng sẽ vẫn được giữ lại.`, {
         title: 'Xóa bộ từ?',
@@ -610,8 +990,20 @@ export async function initializeVocabularyPage() {
     if (input.id) await editWordSet({ ...input, id: input.id });
     else await saveWordSet(input);
     setForm.reset();
+    syncSetColorPalette('#f6c1d1');
     setForm.hidden = true;
     await load();
+  });
+
+  setForm.addEventListener('click', (event) => {
+    const swatch = event.target.closest('[data-set-color]');
+    if (!swatch) return;
+    setForm.querySelector('[name="color"]').value = swatch.dataset.setColor;
+    setForm.querySelectorAll('[data-set-color]').forEach((item) => {
+      const selected = item === swatch;
+      item.classList.toggle('is-selected', selected);
+      item.setAttribute('aria-pressed', String(selected));
+    });
   });
 
   form.addEventListener('submit', async (event) => {
@@ -657,7 +1049,11 @@ export async function initializeVocabularyPage() {
   if (pendingAction) {
     sessionStorage.removeItem('vocabulary-action');
     if (pendingAction === 'bulk') bulkForm.hidden = false;
-    if (pendingAction === 'sets') setForm.hidden = false;
+    if (pendingAction === 'sets') {
+      setForm.reset();
+      syncSetColorPalette('#f6c1d1');
+      setForm.hidden = false;
+    }
     if (pendingAction === 'new') {
       const setId = sessionStorage.getItem('vocabulary-action-set-id');
       sessionStorage.removeItem('vocabulary-action-set-id');

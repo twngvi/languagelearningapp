@@ -10,12 +10,17 @@ export async function listWordSets() {
   return getAllRecords(STORES.wordSets);
 }
 
+export function normalizeWordSetColor(color) {
+  return /^#[0-9a-f]{6}$/i.test(String(color || '')) ? String(color).toLowerCase() : '#d78ca6';
+}
+
 export function createWordSet(input) {
   const name = String(input.name || '').trim();
   if (!name) throw new TypeError('Tên bộ từ là bắt buộc.');
   return {
     name,
     description: String(input.description || '').trim(),
+    color: normalizeWordSetColor(input.color),
     vocabularyIds: Array.isArray(input.vocabularyIds) ? [...new Set(input.vocabularyIds)] : [],
   };
 }

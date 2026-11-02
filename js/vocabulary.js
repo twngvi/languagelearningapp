@@ -54,8 +54,15 @@ export async function initializeVocabularySetPage() {
   };
   detailPage.style.setProperty('--set-color', normalizeWordSetColor(wordSet.color));
   const search = view.querySelector('[data-vocabulary-set-search]');
+  let sortDirection = 'asc';
   const renderSetList = () => {
-    const visibleRecords = filterVocabulary(setRecords, { query: search.value });
+    const visibleRecords = filterVocabulary(setRecords, { query: search.value })
+      .sort((first, second) => {
+        const favoriteOrder = Number(Boolean(second.favorite)) - Number(Boolean(first.favorite));
+        if (favoriteOrder) return favoriteOrder;
+        const wordOrder = first.word.localeCompare(second.word);
+        return sortDirection === 'asc' ? wordOrder : -wordOrder;
+      });
     view.querySelector('[data-vocabulary-set-count]').textContent = visibleRecords.length;
     selectedVocabularyIds.forEach((id) => {
       if (!setRecords.some((record) => record.id === id)) selectedVocabularyIds.delete(id);
@@ -79,6 +86,15 @@ export async function initializeVocabularySetPage() {
 
   view.addEventListener('click', async (event) => {
     const selectionAction = event.target.closest('[data-set-detail-action]')?.dataset.setDetailAction;
+    if (selectionAction === 'sort-alpha') {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      const sortButton = view.querySelector('[data-set-detail-action="sort-alpha"]');
+      sortButton.setAttribute('aria-label', sortDirection === 'asc' ? 'Sắp xếp A đến Z' : 'Sắp xếp Z đến A');
+      sortButton.title = sortDirection === 'asc' ? 'Sắp xếp A đến Z' : 'Sắp xếp Z đến A';
+      sortButton.querySelector('span').textContent = sortDirection === 'asc' ? '↑' : '↓';
+      renderSetList();
+      return;
+    }
     if (selectionAction === 'select-all') {
       const visibleRecords = filterVocabulary(setRecords, { query: search.value });
       const allSelected = visibleRecords.length > 0 && visibleRecords.every((record) => selectedVocabularyIds.has(record.id));
@@ -138,6 +154,13 @@ export async function initializeVocabularySetPage() {
       const record = row ? setRecords.find((item) => item.id === row.dataset.vocabularyId) : null;
       if (vocabularyAction === 'speak' && record) {
         speakText(record.word);
+        return;
+      }
+      if (vocabularyAction === 'favorite' && record) {
+        const updatedRecord = await editVocabulary({ ...record, favorite: !record.favorite });
+        const index = setRecords.findIndex((item) => item.id === record.id);
+        if (index >= 0) setRecords[index] = updatedRecord;
+        renderSetList();
         return;
       }
       if (vocabularyAction === 'edit' && record) {
@@ -635,9 +658,10 @@ export async function initializeVocabularyPage() {
     records = await listVocabulary();
     wordSets = await listWordSets();
     renderWordSetPicker();
-    setList.innerHTML = wordSets.length ? wordSets.map((set) => `
+    setList.innerHTML = wordSets.length ? wordSets.map((set, index) => `
       <article class="word-set-card" data-set-id="${set.id}" style="--set-color: ${normalizeWordSetColor(set.color)}">
-        <div class="word-set-card-content" data-set-open><h3>${set.name}</h3><p>${set.description || 'Chưa có mô tả'} · ${set.vocabularyIds.length} từ</p><div class="set-members">${set.vocabularyIds.map((id) => { const member = records.find((item) => item.id === id); return member ? `<span>${member.word}<button class="delete-image-button" data-set-action="remove-word" data-vocabulary-id="${id}" type="button" aria-label="Xóa ${member.word} khỏi bộ"><img src="image/nút xóa.png" alt=""></button></span>` : ''; }).join('')}</div></div>
+        <img class="word-set-card-decoration" src="image/hình gắn trên card bộ từ/${(index % 6) + 4}.png" alt="" aria-hidden="true">
+        <div class="word-set-card-content" data-set-open><h3>${set.name}</h3>${set.description ? `<p>${set.description}</p>` : ''}<span class="word-set-count">${set.vocabularyIds.length} từ</span></div>
         <div class="row-actions"><button class="secondary-button" data-set-action="add-word" type="button">+ Thêm từ</button><button class="secondary-button" data-set-action="manage" type="button">Quản lý từ</button><button class="icon-action edit-image-button" data-set-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-set-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button></div>
       </article>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>';
   };

@@ -59,12 +59,19 @@ export function renderVocabularySet(setId) {
     </header>
     <section class="vocabulary-list-section vocabulary-set-page">
       <div class="vocabulary-search-row">
-        <label class="search-field vocabulary-set-search"><span class="search-icon" aria-hidden="true">⌕</span><input data-vocabulary-set-search type="search" placeholder="Tìm từ, nghĩa hoặc ghi chú..." aria-label="Tìm kiếm trong bộ từ"></label>
+        <label class="search-field vocabulary-set-search"><input data-vocabulary-set-search type="search" placeholder="Tìm từ, nghĩa hoặc ghi chú..." aria-label="Tìm kiếm trong bộ từ"><span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></span></label>
+        <button class="sort-alpha-button" data-set-detail-action="sort-alpha" type="button" aria-label="Sắp xếp A đến Z" title="Sắp xếp A đến Z"><span aria-hidden="true">↑</span></button>
         <div class="vocabulary-selection-toolbar" data-vocabulary-selection-toolbar hidden>
-        <button class="selection-icon-button" data-set-detail-action="select-all" type="button" aria-label="Chọn tất cả" title="Chọn tất cả">☑</button>
         <span data-vocabulary-selected-count>0 từ</span>
-        <button class="selection-icon-button" data-set-detail-action="move-selected" type="button" aria-label="Di chuyển từ đã chọn" title="Di chuyển từ đã chọn">↗</button>
-        <button class="selection-icon-button is-delete" data-set-detail-action="delete-selected" type="button" aria-label="Xóa từ đã chọn" title="Xóa từ đã chọn">⌫</button>
+        <button class="selection-icon-button" data-set-detail-action="select-all" type="button" aria-label="Chọn tất cả" title="Chọn tất cả">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7.5 12l3 3 6-6"/></svg>
+        </button>
+        <button class="selection-icon-button" data-set-detail-action="move-selected" type="button" aria-label="Di chuyển từ đã chọn" title="Di chuyển từ đã chọn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <button class="selection-icon-button is-delete" data-set-detail-action="delete-selected" type="button" aria-label="Xóa từ đã chọn" title="Xóa từ đã chọn">
+          <img src="image/nút xóa.png" alt="">
+        </button>
         </div>
       </div>
       <div class="detail-entry-panel">

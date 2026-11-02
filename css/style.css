@@ -1137,6 +1137,17 @@ button:disabled {
   font-size: 11px;
 }
 
+.word-set-count {
+  display: inline-flex;
+  margin-top: 9px;
+  padding: 4px 8px;
+  color: color-mix(in srgb, var(--set-color) 72%, #5b4050);
+  background: color-mix(in srgb, var(--set-color) 18%, white);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .automation-options input[type="number"],
 .automation-options select {
   min-height: 32px;
@@ -1634,6 +1645,8 @@ button:disabled {
 }
 
 .word-set-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   min-width: 0;
   min-height: 132px;
@@ -1757,9 +1770,31 @@ button:disabled {
   min-width: 0;
 }
 
+.word-set-card-decoration {
+  position: absolute;
+  right: -9px;
+  bottom: -8px;
+  z-index: 0;
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  opacity: 0.9;
+  pointer-events: none;
+  transform: rotate(4deg);
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.word-set-card:hover .word-set-card-decoration {
+  opacity: 1;
+  transform: rotate(0) scale(1.05);
+}
+
 .word-set-card-content {
+  position: relative;
+  z-index: 1;
   min-width: 0;
   cursor: pointer;
+  padding-right: 48px;
 }
 
 .word-set-card-content:hover h3 {
@@ -2256,7 +2291,7 @@ button:disabled {
 .word-main {
   display: flex;
   flex: 1;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   min-width: 180px;
 }
@@ -2303,15 +2338,25 @@ button:disabled {
 }
 
 .favorite-button {
+  flex: 0 0 auto;
+  align-self: center;
   padding: 0;
+  line-height: 1;
   color: #b4b6c6;
   background: transparent;
   border: 0;
   font-size: 22px;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.favorite-button:hover {
+  color: #e6a637;
+  transform: scale(1.15);
 }
 
 .favorite-button.is-favorite {
   color: #e6a637;
+  text-shadow: 0 2px 8px rgba(230, 166, 55, 0.35);
 }
 
 .vocabulary-set-page .speech-image-button,
@@ -2344,8 +2389,11 @@ button:disabled {
 
 .vocabulary-search-row > .search-field {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 10px;
-  padding: 4px 14px;
+  padding: 3px 9px 3px 14px;
   background: rgba(255, 255, 255, 0.88);
   border: 2px solid color-mix(in srgb, var(--set-color) 38%, white);
   border-radius: 14px;
@@ -2357,15 +2405,71 @@ button:disabled {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--set-color) 18%, transparent);
 }
 
+.vocabulary-search-row > .search-field input {
+  order: 1;
+  flex: 1;
+  min-width: 0;
+  min-height: 34px;
+}
+
+.vocabulary-search-row .search-icon {
+  display: grid;
+  order: 2;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  color: var(--set-color);
+}
+
+.vocabulary-search-row .search-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.sort-alpha-button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  min-width: 46px;
+  height: 40px;
+  margin-bottom: 10px;
+  padding: 0;
+  color: color-mix(in srgb, var(--set-color) 72%, #394052);
+  background: color-mix(in srgb, var(--set-color) 10%, white);
+  border: 1px solid color-mix(in srgb, var(--set-color) 30%, var(--line));
+  border-radius: 11px;
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--set-color) 12%, transparent);
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.sort-alpha-button span {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.sort-alpha-button:hover {
+  background: color-mix(in srgb, var(--set-color) 18%, white);
+  box-shadow: 0 7px 15px color-mix(in srgb, var(--set-color) 20%, transparent);
+  transform: translateY(-1px);
+}
+
 .vocabulary-selection-toolbar {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  gap: 6px;
-  margin: 0 4px 10px 0;
-  padding: 0;
-  color: var(--muted);
-  font-size: 11px;
+  gap: 4px;
+  margin: 0 0 10px 0;
+  padding: 3px 3px 3px 8px;
+  background: color-mix(in srgb, var(--set-color) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--set-color) 25%, var(--line));
+  border-radius: 999px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--set-color) 10%, transparent);
 }
 
 .vocabulary-selection-toolbar[hidden] {
@@ -2410,32 +2514,58 @@ button:disabled {
 }
 
 .vocabulary-selection-toolbar [data-vocabulary-selected-count] {
-  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--set-color) 70%, #444);
+  padding: 0 4px 0 2px;
+  white-space: nowrap;
 }
 
 .selection-icon-button {
-  display: grid;
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-  padding: 0;
-  place-items: center;
-  color: var(--primary-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 40px;
+  padding: 4px 6px;
+  color: color-mix(in srgb, var(--set-color) 65%, #334);
   background: #fff;
-  border: 1px solid color-mix(in srgb, var(--set-color) 30%, var(--line));
-  border-radius: 9px;
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--set-color) 12%, transparent);
-  font-size: 19px;
-  font-weight: 700;
+  border: none;
+  border-radius: 999px;
+  transition: background 160ms ease, transform 140ms ease, box-shadow 160ms ease;
+}
+
+.selection-icon-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.selection-icon-button img {
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
 }
 
 .selection-icon-button:hover {
-  background: color-mix(in srgb, var(--set-color) 12%, white);
+  background: color-mix(in srgb, var(--set-color) 14%, white);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--set-color) 20%, transparent);
   transform: translateY(-1px);
 }
 
+.selection-icon-button:active {
+  transform: translateY(0) scale(0.96);
+}
+
 .selection-icon-button.is-delete {
-  color: #b34f70;
+  color: #c0415f;
+}
+
+.selection-icon-button.is-delete:hover {
+  background: color-mix(in srgb, #c0415f 10%, white);
+  box-shadow: 0 2px 8px rgba(192, 65, 95, 0.2);
 }
 
 .vocabulary-select-checkbox {

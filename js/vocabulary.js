@@ -63,6 +63,14 @@ export async function initializeVocabularySetPage() {
     list.innerHTML = visibleRecords.length
       ? visibleRecords.map((record) => vocabularyRow(record, { selectable: true })).join('')
       : `<p class="empty-state">${setRecords.length ? 'Không tìm thấy từ phù hợp.' : 'Bộ từ này chưa có từ nào.'}</p>`;
+    // Restore checkbox checked state and row highlight after re-render
+    selectedVocabularyIds.forEach((id) => {
+      const row = list.querySelector(`[data-vocabulary-id="${id}"]`);
+      if (!row) return;
+      const cb = row.querySelector('[data-vocabulary-select]');
+      if (cb) cb.checked = true;
+      row.classList.add('is-selected');
+    });
     selectionToolbar.hidden = selectedVocabularyIds.size === 0;
     selectedCount.textContent = `${selectedVocabularyIds.size} từ`;
   };
@@ -210,6 +218,7 @@ export async function initializeVocabularySetPage() {
     if (checkbox) {
       if (checkbox.checked) selectedVocabularyIds.add(checkbox.dataset.vocabularySelect);
       else selectedVocabularyIds.delete(checkbox.dataset.vocabularySelect);
+      checkbox.closest('[data-vocabulary-id]')?.classList.toggle('is-selected', checkbox.checked);
       renderSetList();
       return;
     }
@@ -323,6 +332,7 @@ export async function initializeVocabularySetPage() {
 
   detailBulkForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const submitBtn = detailBulkForm.querySelector('[type="submit"]');
     try {
       const preview = parseBulkVocabulary(new FormData(detailBulkForm).get('bulkText'));
       const invalid = preview.filter((item) => item.error);
@@ -334,33 +344,50 @@ export async function initializeVocabularySetPage() {
         return;
       }
       const existingWords = new Set(setRecords.map((record) => record.word.toLocaleLowerCase()));
+      const newItems = valid.filter((item) => !existingWords.has(item.data.word.toLocaleLowerCase()));
+      if (!newItems.length) {
+        await showAlert('Tất cả từ đã tồn tại trong bộ từ này.', { title: 'Không có từ mới' });
+        return;
+      }
+
+      // Show loading state
+      const originalLabel = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = `Đang lưu 0/${newItems.length}...`;
+
+      // Helper: lookup pronunciation with timeout (3s) to avoid blocking UI
+      const withTimeout = (promise, ms) => Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+      ]);
       const lookupBulkPronunciation = async (word) => {
         try {
-          const result = await lookupEnglishWord(word);
+          const result = await withTimeout(lookupEnglishWord(word), 3000);
           if (result.pronunciation) return result.pronunciation;
         } catch (error) {
-          if (!/\s/.test(word)) throw error;
+          if (error.message !== 'timeout' && !/\s/.test(word)) throw error;
         }
         if (!/\s/.test(word)) return '';
-        const parts = [];
-        for (const part of word.split(/\s+/)) {
-          try {
-            const result = await lookupEnglishWord(part);
-            if (result.pronunciation) parts.push(result.pronunciation.replace(/^\/|\/$/g, ''));
-          } catch (error) {
-            console.info(`Chưa thể tự động điền phiên âm cho "${part}":`, error.message);
-          }
-        }
-        return parts.length ? `/${parts.join(' ')}/` : '';
+        const parts = await Promise.allSettled(
+          word.split(/\s+/).map(async (part) => {
+            const result = await withTimeout(lookupEnglishWord(part), 3000);
+            return result.pronunciation?.replace(/^\/|\/$/g, '') || '';
+          })
+        );
+        const fulfilled = parts.filter((r) => r.status === 'fulfilled' && r.value).map((r) => r.value);
+        return fulfilled.length ? `/${fulfilled.join(' ')}/` : '';
       };
-      for (const item of valid) {
-        if (existingWords.has(item.data.word.toLocaleLowerCase())) continue;
-        let pronunciation = '';
-        try {
-          pronunciation = await lookupBulkPronunciation(item.data.word);
-        } catch (error) {
-          console.info(`Chưa thể tự động điền phiên âm cho "${item.data.word}":`, error.message);
-        }
+
+      // Lookup all pronunciations in parallel
+      const pronunciations = await Promise.allSettled(
+        newItems.map((item) => lookupBulkPronunciation(item.data.word).catch(() => ''))
+      );
+
+      // Save words sequentially (IndexedDB is synchronous internally) with progress update
+      let savedCount = 0;
+      for (let i = 0; i < newItems.length; i++) {
+        const item = newItems[i];
+        const pronunciation = pronunciations[i].status === 'fulfilled' ? pronunciations[i].value : '';
         const savedRecord = await saveVocabulary({
           ...item.data,
           pronunciation,
@@ -370,13 +397,19 @@ export async function initializeVocabularySetPage() {
         await addVocabularyToSet(wordSet.id, savedRecord.id);
         setRecords.push(savedRecord);
         existingWords.add(savedRecord.word.toLocaleLowerCase());
+        savedCount++;
+        submitBtn.textContent = `Đang lưu ${savedCount}/${newItems.length}...`;
       }
+
       renderSetList();
       detailBulkForm.reset();
       detailBulkForm.hidden = true;
     } catch (error) {
       console.error('Không thể nhập từ hàng loạt vào bộ từ:', error);
       await showAlert(`Không thể nhập từ hàng loạt: ${error.message}`);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalLabel || 'Lưu dữ liệu';
     }
   });
 
@@ -966,6 +999,7 @@ export async function initializeVocabularyPage() {
 
   bulkForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const submitBtn = bulkForm.querySelector('[type="submit"]');
     const preview = parseBulkVocabulary(new FormData(bulkForm).get('bulkText'));
     const valid = preview.filter((item) => item.data);
     const invalid = preview.filter((item) => item.error);
@@ -978,7 +1012,13 @@ export async function initializeVocabularyPage() {
       title: 'Xác nhận nhập từ vựng',
       confirmLabel: 'Lưu dữ liệu',
     })) return;
-    for (const item of valid) await saveVocabulary(item.data);
+    const originalLabel = submitBtn?.textContent;
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = `Đang lưu ${valid.length} từ...`; }
+    try {
+      await Promise.all(valid.map((item) => saveVocabulary(item.data)));
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalLabel || 'Xem trước và lưu'; }
+    }
     bulkForm.reset();
     bulkForm.hidden = true;
     await load();

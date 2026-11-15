@@ -12,7 +12,7 @@ import { initializeStudyPage } from './study.js';
 import { initializeSpeakingPage } from './sentences.js';
 import { listDueVocabulary } from './review.js';
 import { getLearningStatistics } from './statistics.js';
-import { listWordSets } from './word-sets.js';
+import { countSavedVocabularyInSet, listWordSets } from './word-sets.js';
 import { initializeBackupPage } from './backup-page.js';
 import { enhanceCustomSelects } from './custom-select.js';
 
@@ -108,12 +108,13 @@ async function initializeHomePage() {
   try {
     const [stats, sets] = await Promise.all([getLearningStatistics(), listWordSets()]);
     const recentSets = sets.slice(-3).reverse();
+    const vocabularyIds = new Set(stats.vocabulary.map((record) => record.id));
     const latest = stats.recentSessions[0];
     content.innerHTML = `
       <section class="welcome-card" aria-label="Bắt đầu học"><div class="welcome-copy"><div class="welcome-heading"><h1>Xin chào, bạn!</h1></div><a class="primary-button" href="#study">Bắt đầu học <span aria-hidden="true">→</span></a></div><div class="welcome-art" aria-hidden="true"><img src="image/logo trên sidebar.png" alt=""></div></section>
       <section class="section-block"><div class="section-heading"><div><p class="eyebrow">TỔNG QUAN</p><h2>Hôm nay của bạn</h2></div><span class="status-pill">${stats.dueCount ? `${stats.dueCount} từ cần ôn` : 'Đã sẵn sàng'}</span></div><div class="overview-grid"><article class="stat-card"><span class="stat-icon purple">▤</span><div><strong>${stats.vocabularyCount}</strong><span>Từ đã lưu</span></div></article><article class="stat-card"><span class="stat-icon orange">◷</span><div><strong>${stats.dueCount}</strong><span>Từ cần ôn hôm nay</span></div></article><article class="stat-card"><span class="stat-icon green">✓</span><div><strong>${stats.learnedCount}</strong><span>Từ đã học</span></div></article></div></section>
       <section class="home-actions"><a class="primary-button" href="#vocabulary">+ Thêm từ mới</a><a class="secondary-button" href="#study">Bắt đầu học</a><a class="secondary-button" href="#speaking">Luyện nói</a></section>
-      <section class="home-columns"><section class="home-panel"><div class="section-heading"><h2>Bộ từ gần đây</h2><a class="text-link" href="#vocabulary">Quản lý →</a></div>${recentSets.length ? recentSets.map((set) => `<div class="home-list-item"><strong>${set.name}</strong><span>${set.vocabularyIds.length} từ</span></div>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>'}</section><section class="home-panel"><div class="section-heading"><h2>Buổi học gần nhất</h2><a class="text-link" href="#progress">Chi tiết →</a></div>${latest ? `<div class="home-list-item"><strong>${formatSessionMode(latest.mode)}</strong><span>${latest.totalCards || 0} thẻ · ${latest.durationSeconds || 0} giây</span></div>` : '<p class="empty-state">Chưa có buổi học nào.</p>'}</section></section>
+      <section class="home-columns"><section class="home-panel"><div class="section-heading"><h2>Bộ từ gần đây</h2><a class="text-link" href="#vocabulary">Quản lý →</a></div>${recentSets.length ? recentSets.map((set) => `<div class="home-list-item"><strong>${set.name}</strong><span>${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></div>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>'}</section><section class="home-panel"><div class="section-heading"><h2>Buổi học gần nhất</h2><a class="text-link" href="#progress">Chi tiết →</a></div>${latest ? `<div class="home-list-item"><strong>${formatSessionMode(latest.mode)}</strong><span>${latest.totalCards || 0} thẻ · ${latest.durationSeconds || 0} giây</span></div>` : '<p class="empty-state">Chưa có buổi học nào.</p>'}</section></section>
       <section class="section-block"><div class="section-heading"><div><p class="eyebrow">THỐNG KÊ</p><h2>Tiến độ học tập</h2></div><a class="text-link" href="#progress">Xem đầy đủ →</a></div><div class="overview-grid"><article class="stat-card"><span class="stat-icon purple">↗</span><div><strong>${stats.reviewedCount}</strong><span>Lượt đã ôn</span></div></article><article class="stat-card"><span class="stat-icon orange">%</span><div><strong>${stats.correctRate}%</strong><span>Tỷ lệ trả lời đúng</span></div></article><article class="stat-card"><span class="stat-icon green">◷</span><div><strong>${stats.studyMinutes} phút</strong><span>Thời gian học</span></div></article></div></section>
       <section class="app-status" aria-label="Trạng thái ứng dụng"><span class="status-dot"></span><span>Ứng dụng đang hoạt động bình thường</span></section>`;
   } catch (error) {

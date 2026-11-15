@@ -21,7 +21,9 @@ export async function getLearningStatistics() {
 
   return {
     vocabularyCount: vocabulary.length,
-    learnedCount: learnedIds.size || vocabulary.filter((record) => record.reviewCount > 0).length,
+    learnedCount: vocabulary.filter((record) => (
+      learnedIds.size ? learnedIds.has(record.id) : record.reviewCount > 0
+    )).length,
     reviewedCount: vocabulary.reduce((total, record) => total + Number(record.reviewCount || 0), 0),
     correctRate: answers.length ? Math.round((correctAnswers / answers.length) * 100) : 0,
     answerCount: answers.length,

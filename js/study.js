@@ -1,5 +1,5 @@
 import { STORES, addRecord, getAllRecords, getRecord, updateRecord } from './db.js';
-import { listWordSets } from './word-sets.js';
+import { countSavedVocabularyInSet, listWordSets } from './word-sets.js';
 import { renderStudyCard, renderChooseQuestion, renderTypeQuestion, renderBlankQuestion } from '../pages/study-page.js';
 import { speakText } from './speech.js';
 import { scheduleReview, listDueVocabulary } from './review.js';
@@ -81,10 +81,11 @@ export async function initializeStudyPage() {
   try {
     ({ records, sets } = await getStudyOptions());
     const setSelect = view.querySelector('[data-study-set]');
+    const vocabularyIds = new Set(records.map((record) => record.id));
     sets.forEach((set) => {
       const option = document.createElement('option');
       option.value = set.id;
-      option.textContent = `${set.name} (${set.vocabularyIds.length} từ)`;
+      option.textContent = `${set.name} (${countSavedVocabularyInSet(set, vocabularyIds)} từ)`;
       setSelect.append(option);
     });
     const dueCount = (await listDueVocabulary()).length;

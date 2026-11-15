@@ -2,6 +2,7 @@ import { getCurrentUser, supabase } from './supabase.js';
 
 const SYNC_TABLE = 'app_records';
 let syncTimer;
+const pendingSyncs = new Map();
 
 function notify(status, detail = '') {
   document.dispatchEvent(new CustomEvent('app:sync-status', { detail: { status, detail } }));
@@ -36,17 +37,30 @@ export async function removeRemoteRecord(storeName, recordId) {
 }
 
 export function queueRecordSync(action, storeName, value) {
-  window.clearTimeout(syncTimer);
+  const recordId = action === 'delete' ? value : value.id;
+  pendingSyncs.set(`${storeName}:${recordId}`, { action, storeName, value });
+  if (syncTimer) return;
+
   syncTimer = window.setTimeout(async () => {
-    try {
-      notify('syncing');
-      if (action === 'delete') await removeRemoteRecord(storeName, value);
-      else await upsertRemoteRecord(storeName, value);
-      notify('synced');
-    } catch (error) {
-      notify('error', error.message);
-      console.error('Không thể đồng bộ dữ liệu lên Supabase:', error);
+    syncTimer = undefined;
+    const operations = [...pendingSyncs.values()];
+    pendingSyncs.clear();
+    let hasErrors = false;
+    notify('syncing');
+    for (const operation of operations) {
+      try {
+        if (operation.action === 'delete') {
+          await removeRemoteRecord(operation.storeName, operation.value);
+        } else {
+          await upsertRemoteRecord(operation.storeName, operation.value);
+        }
+      } catch (error) {
+        hasErrors = true;
+        notify('error', error.message);
+        console.error('Không thể đồng bộ dữ liệu lên Supabase:', error);
+      }
     }
+    if (!hasErrors) notify('synced');
   }, 100);
 }
 

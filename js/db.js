@@ -232,6 +232,42 @@ export async function deleteRecord(storeName, id) {
   }
 }
 
+export async function deleteVocabularyRecord(id) {
+  validateStoreName(STORES.vocabulary);
+  if (!id) {
+    throw new TypeError('A record id is required.');
+  }
+
+  try {
+    const database = await openDatabase();
+    const transaction = database.transaction([STORES.vocabulary, STORES.wordSets], 'readwrite');
+    const wordSetsStore = transaction.objectStore(STORES.wordSets);
+    const request = wordSetsStore.getAll();
+    const updatedSets = [];
+
+    request.onsuccess = () => {
+      request.result.forEach((wordSet) => {
+        const vocabularyIds = Array.isArray(wordSet.vocabularyIds) ? wordSet.vocabularyIds : [];
+        if (!vocabularyIds.includes(id)) return;
+        const updatedSet = {
+          ...wordSet,
+          vocabularyIds: vocabularyIds.filter((vocabularyId) => vocabularyId !== id),
+          updatedAt: new Date().toISOString(),
+        };
+        wordSetsStore.put(updatedSet);
+        updatedSets.push(updatedSet);
+      });
+      transaction.objectStore(STORES.vocabulary).delete(id);
+    };
+
+    await transactionResult(transaction, request);
+    queueRecordSync?.('delete', STORES.vocabulary, id);
+    updatedSets.forEach((wordSet) => queueRecordSync?.('upsert', STORES.wordSets, wordSet));
+  } catch (error) {
+    throw databaseError(error, 'delete', STORES.vocabulary);
+  }
+}
+
 export async function findRecords(storeName, predicate) {
   if (typeof predicate !== 'function') {
     throw new TypeError('A predicate function is required.');

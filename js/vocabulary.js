@@ -1,12 +1,12 @@
 import {
   STORES,
   addRecord,
-  deleteRecord,
+  deleteVocabularyRecord,
   getAllRecords,
   updateRecord,
 } from './db.js';
 import { vocabularyRow } from '../pages/vocabulary-page.js';
-import { addVocabularyToSet, listWordSets, normalizeWordSetColor, parseBulkVocabulary, removeVocabularyFromSet, removeWordSet, saveWordSet, editWordSet } from './word-sets.js';
+import { addVocabularyToSet, countSavedVocabularyInSet, listWordSets, normalizeWordSetColor, parseBulkVocabulary, removeVocabularyFromSet, removeWordSet, saveWordSet, editWordSet } from './word-sets.js';
 import { populateVoiceSelect, speakText } from './speech.js';
 import { showAlert, showConfirm, showSelectPrompt, showPrompt } from './notifications.js';
 
@@ -52,7 +52,9 @@ export async function initializeVocabularySetPage() {
       swatch.setAttribute('aria-pressed', String(selected));
     });
   };
-  detailPage.style.setProperty('--set-color', normalizeWordSetColor(wordSet.color));
+  const setColor = normalizeWordSetColor(wordSet.color);
+  view.style.setProperty('--set-color', setColor);
+  detailPage.style.setProperty('--set-color', setColor);
   const search = view.querySelector('[data-vocabulary-set-search]');
   let sortDirection = 'asc';
   const renderSetList = () => {
@@ -110,11 +112,11 @@ export async function initializeVocabularySetPage() {
       if (!selectedRecords.length) return;
       try {
         if (selectionAction === 'delete-selected') {
-          if (!await showConfirm(`Xóa ${selectedRecords.length} từ khỏi bộ "${wordSet.name}"? Dữ liệu từ vựng vẫn được giữ lại.`, {
+          if (!await showConfirm(`Xóa vĩnh viễn ${selectedRecords.length} từ khỏi kho từ vựng và tất cả bộ từ?`, {
             title: 'Xóa từ đã chọn?',
-            confirmLabel: 'Xóa khỏi bộ',
+            confirmLabel: 'Xóa vĩnh viễn',
           })) return;
-          for (const record of selectedRecords) await removeVocabularyFromSet(wordSet.id, record.id);
+          for (const record of selectedRecords) await removeVocabulary(record.id);
         } else {
           const otherSets = wordSets.filter((set) => set.id !== wordSet.id);
           if (!otherSets.length) {
@@ -177,11 +179,11 @@ export async function initializeVocabularySetPage() {
         detailVocabularyForm.querySelector('[name="word"]').focus();
         return;
       }
-      if (vocabularyAction === 'delete' && record && await showConfirm(`Xóa từ "${record.word}" khỏi bộ từ này?`, {
-        title: 'Xóa từ khỏi bộ?',
-        confirmLabel: 'Xóa từ',
+      if (vocabularyAction === 'delete' && record && await showConfirm(`Xóa vĩnh viễn từ "${record.word}" khỏi kho từ vựng và tất cả bộ từ?`, {
+        title: 'Xóa từ vựng?',
+        confirmLabel: 'Xóa vĩnh viễn',
       })) {
-        await removeVocabularyFromSet(wordSet.id, record.id);
+        await removeVocabulary(record.id);
         const index = setRecords.findIndex((item) => item.id === record.id);
         if (index >= 0) setRecords.splice(index, 1);
         renderSetList();
@@ -264,7 +266,9 @@ export async function initializeVocabularySetPage() {
       const input = Object.fromEntries(new FormData(detailForm).entries());
       wordSet = await editWordSet({ ...wordSet, ...input, id: wordSet.id });
       setTitle.firstChild.textContent = `${wordSet.name} `;
-      detailPage.style.setProperty('--set-color', normalizeWordSetColor(wordSet.color));
+      const updatedSetColor = normalizeWordSetColor(wordSet.color);
+      view.style.setProperty('--set-color', updatedSetColor);
+      detailPage.style.setProperty('--set-color', updatedSetColor);
       detailForm.hidden = true;
     } catch (error) {
       console.error('Không thể lưu chỉnh sửa bộ từ:', error);
@@ -511,7 +515,7 @@ export const editVocabulary = (record) => updateRecord(STORES.vocabulary, {
   ...record,
   ...createVocabularyRecord(record),
 });
-export const removeVocabulary = (id) => deleteRecord(STORES.vocabulary, id);
+export const removeVocabulary = (id) => deleteVocabularyRecord(id);
 
 export async function findDuplicateVocabulary(word, excludeId = '') {
   const normalizedWord = String(word || '').trim().toLocaleLowerCase();
@@ -650,18 +654,19 @@ export async function initializeVocabularyPage() {
   const hideSetForm = ({ reset = false } = {}) => {
     if (reset) {
       setForm.reset();
-      syncSetColorPalette('#f6c1d1');
+      syncSetColorPalette('#d1d1d1');
     }
     setForm.hidden = true;
   };
   const load = async () => {
     records = await listVocabulary();
     wordSets = await listWordSets();
+    const vocabularyIds = new Set(records.map((record) => record.id));
     renderWordSetPicker();
     setList.innerHTML = wordSets.length ? wordSets.map((set, index) => `
       <article class="word-set-card" data-set-id="${set.id}" style="--set-color: ${normalizeWordSetColor(set.color)}">
-        <img class="word-set-card-decoration" src="image/hình gắn trên card bộ từ/${(index % 6) + 4}.png" alt="" aria-hidden="true">
-        <div class="word-set-card-content" data-set-open><h3>${set.name}</h3>${set.description ? `<p>${set.description}</p>` : ''}<span class="word-set-count">${set.vocabularyIds.length} từ</span></div>
+        <img class="word-set-card-decoration" data-set-action="edit" src="image/hình gắn trên card bộ từ/${(index % 6) + 4}.png" alt="Chỉnh sửa bộ từ" role="button" tabindex="0">
+        <div class="word-set-card-content" data-set-open><h3>${set.name}</h3>${set.description ? `<p>${set.description}</p>` : ''}<span class="word-set-count">${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></div>
         <div class="row-actions"><button class="secondary-button" data-set-action="add-word" type="button">+ Thêm từ</button><button class="secondary-button" data-set-action="manage" type="button">Quản lý từ</button><button class="icon-action edit-image-button" data-set-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-set-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button></div>
       </article>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>';
   };
@@ -945,7 +950,7 @@ export async function initializeVocabularyPage() {
       if (action === 'bulk') bulkForm.hidden = false;
       if (action === 'sets') {
         setForm.reset();
-        syncSetColorPalette('#f6c1d1');
+        syncSetColorPalette('#d1d1d1');
         setForm.hidden = false;
       }
       if (action === 'cancel-bulk') bulkForm.hidden = true;
@@ -972,14 +977,13 @@ export async function initializeVocabularyPage() {
   }, true);
 
   view.addEventListener('click', async (event) => {
-    const setOpenTarget = event.target.closest('[data-set-open]');
-    if (setOpenTarget && !event.target.closest('[data-set-action]')) {
-      window.location.hash = `#vocabulary-set/${setOpenTarget.closest('[data-set-id]').dataset.setId}`;
+    const actionElement = event.target.closest('[data-set-action]');
+    const setCard = event.target.closest('[data-set-id]');
+    if (!setCard) return;
+    if (!actionElement) {
+      window.location.hash = `#vocabulary-set/${setCard.dataset.setId}`;
       return;
     }
-    const actionElement = event.target.closest('[data-set-action]');
-    if (!actionElement) return;
-    const setCard = actionElement.closest('[data-set-id]');
     const sets = await listWordSets();
     const set = sets.find((item) => item.id === setCard.dataset.setId);
     try {
@@ -1054,7 +1058,7 @@ export async function initializeVocabularyPage() {
     if (input.id) await editWordSet({ ...input, id: input.id });
     else await saveWordSet(input);
     setForm.reset();
-    syncSetColorPalette('#f6c1d1');
+    syncSetColorPalette('#d1d1d1');
     setForm.hidden = true;
     await load();
   });
@@ -1115,7 +1119,7 @@ export async function initializeVocabularyPage() {
     if (pendingAction === 'bulk') bulkForm.hidden = false;
     if (pendingAction === 'sets') {
       setForm.reset();
-      syncSetColorPalette('#f6c1d1');
+      syncSetColorPalette('#d1d1d1');
       setForm.hidden = false;
     }
     if (pendingAction === 'new') {

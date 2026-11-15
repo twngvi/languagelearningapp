@@ -8,6 +8,7 @@ export function renderVocabulary() {
   return `
     <header class="page-header">
       <div><p class="eyebrow">KHO TỪ VỰNG</p><h1>Từ vựng</h1></div>
+      <button class="primary-button word-set-add-button" data-vocabulary-action="sets" type="button">+ Thêm bộ từ</button>
     </header>
     <form class="vocabulary-form" data-vocabulary-form hidden>
       <div class="section-heading"><h2 data-vocabulary-form-title>Thêm từ mới</h2><button class="close-button" data-vocabulary-action="cancel" type="button" aria-label="Đóng biểu mẫu">×</button></div>
@@ -40,14 +41,14 @@ export function renderVocabulary() {
       <div class="form-actions"><button class="secondary-button" data-vocabulary-action="cancel" type="button">Hủy</button><button class="primary-button" type="submit">Lưu từ</button></div>
     </form>
     <form class="vocabulary-form" data-bulk-form hidden><div class="section-heading"><h2>Nhập hàng loạt</h2><button class="close-button" data-vocabulary-action="cancel-bulk" type="button">×</button></div><p class="form-help">Mỗi dòng dùng dạng <code>word - nghĩa</code>. Dấu gạch ngang trong nội dung vẫn được giữ nguyên nếu không có khoảng trắng hai bên.</p><textarea name="bulkText" rows="6" placeholder="achieve - đạt được&#10;improve - cải thiện" required></textarea><div class="form-actions"><button class="primary-button" type="submit">Xem trước và lưu</button></div></form>
-    <form class="vocabulary-form word-set-form" data-set-form hidden><div class="section-heading"><h2>Bộ từ</h2><button class="close-button" data-vocabulary-action="cancel-set" type="button">×</button></div><input type="hidden" name="id"><div class="form-grid"><label>Tên bộ từ *<input name="name" required></label><label>Mô tả<input name="description"></label><fieldset class="color-field"><legend>Màu thẻ</legend><input type="hidden" name="color" value="#f6c1d1"><div class="color-palette" role="radiogroup" aria-label="Chọn màu cho bộ từ">${['#f6c1d1', '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee', '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc', '#f7d0c4', '#e8d5bd', '#d4dfca', '#c7d9d8', '#e3d3cc'].map((color, index) => `<button class="color-swatch${index === 0 ? ' is-selected' : ''}" type="button" data-set-color="${color}" style="--swatch-color: ${color}" aria-label="Màu ${index + 1}" aria-pressed="${index === 0}"></button>`).join('')}</div></fieldset></div><div class="form-actions"><button class="primary-button" type="submit">Lưu bộ từ</button></div></form>
-    <section class="word-sets-section"><div class="section-heading"><h2>Bộ từ</h2><button class="primary-button" data-vocabulary-action="sets" type="button">+ Thêm bộ từ</button></div><div class="word-set-list" data-set-list></div></section>
+    <form class="vocabulary-form word-set-form" data-set-form hidden><div class="section-heading"><h2>Bộ từ</h2><button class="close-button" data-vocabulary-action="cancel-set" type="button">×</button></div><input type="hidden" name="id"><div class="form-grid"><label>Tên bộ từ *<input name="name" required></label><label>Mô tả<input name="description"></label><fieldset class="color-field"><legend>Màu thẻ</legend><input type="hidden" name="color" value="#d1d1d1"><div class="color-palette" role="radiogroup" aria-label="Chọn màu cho bộ từ">${['#d1d1d1', '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee', '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc', '#f7d0c4', '#e8d5bd', '#d4dfca', '#c7d9d8', '#e3d3cc'].map((color, index) => `<button class="color-swatch${index === 0 ? ' is-selected' : ''}" type="button" data-set-color="${color}" style="--swatch-color: ${color}" aria-label="Màu ${index + 1}" aria-pressed="${index === 0}"></button>`).join('')}</div></fieldset></div><div class="form-actions"><button class="primary-button" type="submit">Lưu bộ từ</button></div></form>
+    <section class="word-sets-section"><div class="word-set-list" data-set-list></div></section>
   `;
 }
 
 export function renderVocabularySet(setId) {
   return `
-    <header class="page-header">
+    <header class="page-header vocabulary-set-header">
       <div><p class="eyebrow">BỘ TỪ</p><h1 data-vocabulary-set-title tabindex="0" title="Bấm để sửa tên">Đang tải bộ từ... <span class="record-count" data-vocabulary-set-count>0</span></h1></div>
       <div class="header-actions vocabulary-actions">
         <button class="primary-button vocabulary-action-button vocabulary-action-new" data-set-detail-action="new-word" type="button">+ Thêm từ</button>
@@ -99,7 +100,7 @@ export function renderVocabularySet(setId) {
         <div class="form-grid">
           <label>Tên bộ từ *<input name="name" required></label>
           <label>Mô tả<input name="description"></label>
-          <fieldset class="color-field"><legend>Màu thẻ</legend><input type="hidden" name="color" value="#f6c1d1"><div class="color-palette" role="radiogroup" aria-label="Chọn màu cho bộ từ">${['#f6c1d1', '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee', '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc', '#f7d0c4', '#e8d5bd', '#d4dfca', '#c7d9d8', '#e3d3cc'].map((color, index) => `<button class="color-swatch${index === 0 ? ' is-selected' : ''}" type="button" data-detail-set-color="${color}" style="--swatch-color: ${color}" aria-label="Màu ${index + 1}" aria-pressed="${index === 0}"></button>`).join('')}</div></fieldset>
+          <fieldset class="color-field"><legend>Màu thẻ</legend><input type="hidden" name="color" value="#d1d1d1"><div class="color-palette" role="radiogroup" aria-label="Chọn màu cho bộ từ">${['#d1d1d1', '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee', '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc', '#f7d0c4', '#e8d5bd', '#d4dfca', '#e3d3cc'].map((color, index) => `<button class="color-swatch${index === 0 ? ' is-selected' : ''}" type="button" data-detail-set-color="${color}" style="--swatch-color: ${color}" aria-label="Màu ${index + 1}" aria-pressed="${index === 0}"></button>`).join('')}</div></fieldset>
         </div>
         <div class="form-actions"><button class="primary-button" type="submit"><img src="image/Shinam.png" alt=""> Lưu thay đổi</button></div>
       </form>

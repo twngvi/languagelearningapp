@@ -10,8 +10,13 @@ export async function listWordSets() {
   return getAllRecords(STORES.wordSets);
 }
 
+export function countSavedVocabularyInSet(wordSet, vocabularyIds) {
+  const setVocabularyIds = Array.isArray(wordSet.vocabularyIds) ? wordSet.vocabularyIds : [];
+  return setVocabularyIds.filter((id) => vocabularyIds.has(id)).length;
+}
+
 export function normalizeWordSetColor(color) {
-  return /^#[0-9a-f]{6}$/i.test(String(color || '')) ? String(color).toLowerCase() : '#d78ca6';
+  return /^#[0-9a-f]{6}$/i.test(String(color || '')) ? String(color).toLowerCase() : '#d1d1d1';
 }
 
 export function createWordSet(input) {

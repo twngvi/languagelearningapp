@@ -24,17 +24,20 @@ export function createWordSet(input) {
   if (!name) throw new TypeError('Tên bộ từ là bắt buộc.');
   return {
     name,
-    description: String(input.description || '').trim(),
     color: normalizeWordSetColor(input.color),
     vocabularyIds: Array.isArray(input.vocabularyIds) ? [...new Set(input.vocabularyIds)] : [],
   };
 }
 
 export const saveWordSet = (input) => addRecord(STORES.wordSets, createWordSet(input));
-export const editWordSet = (record) => updateRecord(STORES.wordSets, {
-  ...record,
-  ...createWordSet(record),
-});
+export const editWordSet = (record) => {
+  const updatedRecord = { ...record };
+  delete updatedRecord.description;
+  return updateRecord(STORES.wordSets, {
+    ...updatedRecord,
+    ...createWordSet(record),
+  });
+};
 
 export async function removeWordSet(id) {
   const wordSet = await listWordSets().then((sets) => sets.find((set) => set.id === id));

@@ -21,9 +21,11 @@ export class Router {
       ? requestedRoute
       : requestedRoute.startsWith('vocabulary-set/')
         ? 'vocabulary-set'
-        : 'home';
+        : requestedRoute.startsWith('study-session/')
+          ? 'study-session'
+          : 'home';
 
-    if (requestedRoute !== route && route !== 'vocabulary-set') {
+    if (requestedRoute !== route && !['vocabulary-set', 'study-session'].includes(route)) {
       window.history.replaceState(null, '', `#${route}`);
     }
 
@@ -40,7 +42,10 @@ export class Router {
   }
 
   updateNavigation(activeRoute) {
-    const navigationRoute = activeRoute === 'vocabulary-set' ? 'vocabulary' : activeRoute;
+    const navigationRoute = {
+      'vocabulary-set': 'vocabulary',
+      'study-session': 'progress',
+    }[activeRoute] || activeRoute;
     document.querySelectorAll(this.navigationSelector).forEach((link) => {
       const isActive = link.getAttribute('href') === `#${navigationRoute}`;
       link.classList.toggle('active', isActive);

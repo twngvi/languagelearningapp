@@ -209,7 +209,6 @@ export async function initializeVocabularySetPage() {
         detailForm.hidden = false;
         detailForm.querySelector('[name="id"]').value = wordSet.id;
         detailForm.querySelector('[name="name"]').value = wordSet.name;
-        detailForm.querySelector('[name="description"]').value = wordSet.description || '';
         syncDetailColor(wordSet.color);
       }
       if (action === 'cancel-edit') {
@@ -666,7 +665,7 @@ export async function initializeVocabularyPage() {
     setList.innerHTML = wordSets.length ? wordSets.map((set, index) => `
       <article class="word-set-card" data-set-id="${set.id}" style="--set-color: ${normalizeWordSetColor(set.color)}">
         <img class="word-set-card-decoration" data-set-action="edit" src="image/hình gắn trên card bộ từ/${(index % 6) + 4}.png" alt="Chỉnh sửa bộ từ" role="button" tabindex="0">
-        <div class="word-set-card-content" data-set-open><h3>${set.name}</h3>${set.description ? `<p>${set.description}</p>` : ''}<span class="word-set-count">${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></div>
+        <div class="word-set-card-content" data-set-open><h3>${set.name}</h3><span class="word-set-count">${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></div>
         <div class="row-actions"><button class="secondary-button" data-set-action="add-word" type="button">+ Thêm từ</button><button class="secondary-button" data-set-action="manage" type="button">Quản lý từ</button><button class="icon-action edit-image-button" data-set-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-set-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button></div>
       </article>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>';
   };
@@ -991,7 +990,6 @@ export async function initializeVocabularyPage() {
         setForm.hidden = false;
         setForm.querySelector('[name="id"]').value = set.id;
         setForm.querySelector('[name="name"]').value = set.name;
-        setForm.querySelector('[name="description"]').value = set.description;
         syncSetColorPalette(set.color);
       }
       if (actionElement.dataset.setAction === 'delete' && await showConfirm(`Xóa bộ từ "${set.name}"? Từ vựng sẽ vẫn được giữ lại.`, {

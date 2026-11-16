@@ -6,10 +6,13 @@ import { renderStudy } from '../pages/study-page.js';
 import { renderSpeaking } from '../pages/speaking-page.js';
 import { renderProgress } from '../pages/progress-page.js';
 import { renderSettings } from '../pages/settings-page.js';
+import { renderStudySessionDetail } from '../pages/session-detail-page.js';
 import { initializeVocabularyPage } from './vocabulary.js';
 import { initializeVocabularySetPage } from './vocabulary.js';
 import { initializeStudyPage } from './study.js';
 import { initializeSpeakingPage } from './sentences.js';
+import { initializeStudySessionDetail } from './session-detail.js';
+import { getDailyWordGoal, saveDailyWordGoal } from './settings.js';
 import { listDueVocabulary } from './review.js';
 import { getLearningStatistics } from './statistics.js';
 import { countSavedVocabularyInSet, listWordSets } from './word-sets.js';
@@ -20,6 +23,7 @@ const routes = {
   home: { render: renderHome },
   vocabulary: { render: renderVocabulary },
   'vocabulary-set': { render: () => renderVocabularySet(window.location.hash.slice('#vocabulary-set/'.length)) },
+  'study-session': { render: () => renderStudySessionDetail(window.location.hash.slice('#study-session/'.length)) },
   study: { render: renderStudy },
   speaking: { render: renderSpeaking },
   progress: { render: renderProgress },
@@ -64,6 +68,9 @@ const router = new Router({
     if (route === 'vocabulary-set') {
       initializeVocabularySetPage();
     }
+    if (route === 'study-session') {
+      initializeStudySessionDetail();
+    }
     if (route === 'study') {
       initializeStudyPage();
     }
@@ -77,10 +84,37 @@ const router = new Router({
       initializeProgressPage();
     }
     if (route === 'settings') {
+      initializeDailyGoalSetting();
       initializeBackupPage();
     }
   },
 });
+
+async function initializeDailyGoalSetting() {
+  const form = document.querySelector('[data-daily-goal-form]');
+  const input = form.querySelector('[data-daily-word-goal]');
+  const message = form.querySelector('[data-daily-goal-message]');
+
+  try {
+    input.value = await getDailyWordGoal();
+  } catch (error) {
+    console.error('Không thể tải mục tiêu học tập:', error);
+    message.textContent = `Không thể tải mục tiêu: ${error.message}`;
+    return;
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    message.textContent = '';
+    try {
+      await saveDailyWordGoal(input.value);
+      message.textContent = 'Đã lưu mục tiêu học tập.';
+    } catch (error) {
+      console.error('Không thể lưu mục tiêu học tập:', error);
+      message.textContent = `Không thể lưu mục tiêu: ${error.message}`;
+    }
+  });
+}
 
 async function initializeProgressPage() {
   const content = document.querySelector('[data-progress-content]');
@@ -90,13 +124,19 @@ async function initializeProgressPage() {
       <div class="overview-grid"><article class="stat-card"><span class="stat-icon purple">▤</span><div><strong>${stats.vocabularyCount}</strong><span>Từ đã lưu</span></div></article><article class="stat-card"><span class="stat-icon green">✓</span><div><strong>${stats.learnedCount}</strong><span>Từ đã học</span></div></article><article class="stat-card"><span class="stat-icon orange">%</span><div><strong>${stats.correctRate}%</strong><span>Tỷ lệ trả lời đúng</span></div></article></div>
       <div class="overview-grid"><article class="stat-card"><span class="stat-icon purple">↗</span><div><strong>${stats.reviewedCount}</strong><span>Lượt đã ôn</span></div></article><article class="stat-card"><span class="stat-icon orange">◷</span><div><strong>${stats.studyMinutes} phút</strong><span>Thời gian học</span></div></article><article class="stat-card"><span class="stat-icon green">▤</span><div><strong>${stats.sentenceCount}</strong><span>Câu giao tiếp</span></div></article></div>
       <article class="progress-card"><span class="stat-icon orange">◷</span><strong>${due.length}</strong><p>Từ cần ôn hôm nay</p><a class="primary-button" href="#study">Bắt đầu ôn tập</a></article>
-      <section class="review-list"><h2>Lịch sử buổi học</h2>${stats.recentSessions.length ? stats.recentSessions.map((session) => `<article class="review-item"><div><strong>${session.mode || 'Buổi học'}</strong><span>${session.totalCards || 0} thẻ · ${session.durationSeconds || 0} giây</span></div><small>${new Date(session.completedAt || session.createdAt).toLocaleString('vi-VN')}</small></article>`).join('') : '<p class="empty-state">Chưa có buổi học nào.</p>'}</section>
+      <section class="review-list"><h2>Lịch sử buổi học</h2>${stats.recentSessions.length ? stats.recentSessions.map((session) => `<a class="review-item" href="#study-session/${encodeURIComponent(session.id)}"><div><strong>${escapeHtml(session.mode || 'Buổi học')}</strong><span>${Number(session.totalCards) || 0} thẻ · ${Number(session.durationSeconds) || 0} giây</span></div><small>${new Date(session.completedAt || session.createdAt).toLocaleString('vi-VN')}</small></a>`).join('') : '<p class="empty-state">Chưa có buổi học nào.</p>'}</section>
       <section class="review-list"><h2>Danh sách từ khó</h2>${stats.difficultWords.length ? stats.difficultWords.slice(0, 10).map((record) => `<article class="review-item"><div><strong>${record.word}</strong><span>${record.meaning}</span></div><small>${record.reviewLevel || 'Từ khó'}</small></article>`).join('') : '<p class="empty-state">Chưa có từ khó.</p>'}</section>`;
   } catch (error) {
     console.error('Không thể tải tiến độ ôn tập:', error);
     content.innerHTML = `<p class="empty-state">Không thể tải lịch ôn: ${error.message}</p>`;
   }
 
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;',
+  }[character]));
 }
 
 function formatSessionMode(mode) {
@@ -111,10 +151,9 @@ async function initializeHomePage() {
     const vocabularyIds = new Set(stats.vocabulary.map((record) => record.id));
     const latest = stats.recentSessions[0];
     content.innerHTML = `
-      <section class="welcome-card" aria-label="Bắt đầu học"><div class="welcome-copy"><div class="welcome-heading"><h1>Xin chào, bạn!</h1></div><a class="primary-button" href="#study">Bắt đầu học <span aria-hidden="true">→</span></a></div><div class="welcome-art" aria-hidden="true"><img src="image/logo trên sidebar.png" alt=""></div></section>
-      <section class="section-block"><div class="section-heading"><div><p class="eyebrow">TỔNG QUAN</p><h2>Hôm nay của bạn</h2></div><span class="status-pill">${stats.dueCount ? `${stats.dueCount} từ cần ôn` : 'Đã sẵn sàng'}</span></div><div class="overview-grid"><article class="stat-card"><span class="stat-icon purple">▤</span><div><strong>${stats.vocabularyCount}</strong><span>Từ đã lưu</span></div></article><article class="stat-card"><span class="stat-icon orange">◷</span><div><strong>${stats.dueCount}</strong><span>Từ cần ôn hôm nay</span></div></article><article class="stat-card"><span class="stat-icon green">✓</span><div><strong>${stats.learnedCount}</strong><span>Từ đã học</span></div></article></div></section>
-      <section class="home-actions"><a class="primary-button" href="#vocabulary">+ Thêm từ mới</a><a class="secondary-button" href="#study">Bắt đầu học</a><a class="secondary-button" href="#speaking">Luyện nói</a></section>
-      <section class="home-columns"><section class="home-panel"><div class="section-heading"><h2>Bộ từ gần đây</h2><a class="text-link" href="#vocabulary">Quản lý →</a></div>${recentSets.length ? recentSets.map((set) => `<div class="home-list-item"><strong>${set.name}</strong><span>${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></div>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>'}</section><section class="home-panel"><div class="section-heading"><h2>Buổi học gần nhất</h2><a class="text-link" href="#progress">Chi tiết →</a></div>${latest ? `<div class="home-list-item"><strong>${formatSessionMode(latest.mode)}</strong><span>${latest.totalCards || 0} thẻ · ${latest.durationSeconds || 0} giây</span></div>` : '<p class="empty-state">Chưa có buổi học nào.</p>'}</section></section>
+      <section class="welcome-card" aria-label="Không gian học tập"><div class="welcome-copy"><div class="welcome-heading"><h1>Xin chào, bạn!</h1></div></div><div class="welcome-art" aria-hidden="true"><img src="image/logo trên sidebar.png" alt=""></div></section>
+      <section class="section-block"><div class="section-heading"><div><p class="eyebrow">TỔNG QUAN</p><h2>Hôm nay của bạn</h2></div><span class="status-pill">${stats.dailyWordGoalRemaining ? `Còn ${stats.dailyWordGoalRemaining} từ cần học` : 'Đã hoàn thành mục tiêu'}</span></div><div class="overview-grid"><article class="stat-card"><span class="stat-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4.5h11a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3v-12Z"/><path d="M5 16.5a3 3 0 0 1 3-3h11M9 8h6M9 11h6"/></svg></span><div><strong>${stats.vocabularyCount}</strong><span>Từ đã lưu</span></div></article><article class="stat-card"><span class="stat-icon orange" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span><div><strong>${stats.dailyWordGoalRemaining}</strong><span>Từ cần ôn hôm nay</span></div></article><article class="stat-card"><span class="stat-icon green" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span><div><strong>${stats.learnedCount}</strong><span>Từ đã học</span></div></article></div></section>
+      <section class="home-columns"><section class="home-panel"><div class="section-heading"><h2>Bộ từ gần đây</h2><a class="text-link" href="#vocabulary">Quản lý →</a></div>${recentSets.length ? recentSets.map((set) => `<a class="home-list-item" href="#vocabulary-set/${encodeURIComponent(set.id)}"><strong>${escapeHtml(set.name)}</strong><span>${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></a>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>'}</section><section class="home-panel"><div class="section-heading"><h2>Buổi học gần nhất</h2><a class="text-link" href="#progress">Chi tiết →</a></div>${latest ? `<a class="home-list-item" href="#study-session/${encodeURIComponent(latest.id)}"><strong>${escapeHtml(formatSessionMode(latest.mode))}</strong><span>${Number(latest.totalCards) || 0} thẻ · ${Number(latest.durationSeconds) || 0} giây</span></a>` : '<p class="empty-state">Chưa có buổi học nào.</p>'}</section></section>
       <section class="section-block"><div class="section-heading"><div><p class="eyebrow">THỐNG KÊ</p><h2>Tiến độ học tập</h2></div><a class="text-link" href="#progress">Xem đầy đủ →</a></div><div class="overview-grid"><article class="stat-card"><span class="stat-icon purple">↗</span><div><strong>${stats.reviewedCount}</strong><span>Lượt đã ôn</span></div></article><article class="stat-card"><span class="stat-icon orange">%</span><div><strong>${stats.correctRate}%</strong><span>Tỷ lệ trả lời đúng</span></div></article><article class="stat-card"><span class="stat-icon green">◷</span><div><strong>${stats.studyMinutes} phút</strong><span>Thời gian học</span></div></article></div></section>
       <section class="app-status" aria-label="Trạng thái ứng dụng"><span class="status-dot"></span><span>Ứng dụng đang hoạt động bình thường</span></section>`;
   } catch (error) {

@@ -1,6 +1,15 @@
 export function renderSettings() {
   return `
     <header class="page-header"><div><p class="eyebrow">CÁ NHÂN HÓA</p><h1>Cài đặt</h1></div></header>
+    <section class="settings-card">
+      <div class="section-heading"><div><p class="eyebrow">MỤC TIÊU HỌC TẬP</p><h2>Số từ cần học mỗi ngày</h2></div></div>
+      <form class="daily-goal-form" data-daily-goal-form>
+        <label for="daily-word-goal">Mục tiêu từ cần học mỗi ngày</label>
+        <div class="daily-goal-controls"><input id="daily-word-goal" name="dailyWordGoal" data-daily-word-goal type="number" min="1" max="999" step="1" required><button class="primary-button" type="submit">Lưu mục tiêu</button></div>
+        <p class="form-help">Số từ còn lại trong ngày sẽ giảm khi bạn hoàn thành buổi học.</p>
+        <p class="notice" data-daily-goal-message role="status" aria-live="polite"></p>
+      </form>
+    </section>
     <section class="settings-card" data-sync-panel>
       <div class="section-heading"><div><p class="eyebrow">ĐỒNG BỘ THIẾT BỊ</p><h2>Supabase</h2></div><span class="status-pill" data-sync-status>Chưa đăng nhập</span></div>
       <form data-sync-login-form class="sync-login-form">

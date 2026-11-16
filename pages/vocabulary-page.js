@@ -55,7 +55,7 @@ export function renderVocabularySet(setId) {
         <button class="secondary-button vocabulary-action-button vocabulary-action-bulk" data-set-detail-action="bulk" type="button">Nhập hàng loạt</button>
         <button class="icon-action edit-image-button" data-set-detail-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button>
         <button class="icon-action delete-image-button" data-set-detail-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button>
-        <a class="secondary-button" href="#vocabulary">← Quay lại</a>
+        <a class="secondary-button" href="#vocabulary" aria-label="Quay lại kho từ vựng" title="Quay lại kho từ vựng">←</a>
       </div>
     </header>
     <section class="vocabulary-list-section vocabulary-set-page">

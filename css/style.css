@@ -1175,7 +1175,7 @@ button:disabled {
   margin-top: 9px;
   padding: 4px 8px;
   color: color-mix(in srgb, var(--set-color) 72%, #5b4050);
-  background: color-mix(in srgb, var(--set-color) 18%, white);
+  background: color-mix(in srgb, var(--set-color) 32%, white);
   border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
@@ -1711,8 +1711,8 @@ button:disabled {
   gap: 8px;
   padding: 14px;
   background: #fafafa;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--set-color) 16%, white), var(--surface) 72%);
-  border: 1px solid color-mix(in srgb, var(--set-color) 52%, white);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--set-color) 34%, white), color-mix(in srgb, var(--set-color) 16%, white) 72%);
+  border: 1px solid color-mix(in srgb, var(--set-color) 68%, white);
   border-radius: 16px;
   box-shadow: 0 7px 18px rgba(70, 70, 70, 0.1);
   aspect-ratio: auto;
@@ -1753,7 +1753,7 @@ button:disabled {
 }
 
 .word-set-form .form-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
 }
 
@@ -3319,8 +3319,13 @@ button:disabled {
   }
 
   .word-set-list {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     justify-content: stretch;
+    gap: 10px;
+  }
+
+  .word-sets-section {
+    margin-top: 12px;
   }
 
   .header-actions {
@@ -3330,6 +3335,58 @@ button:disabled {
   .header-actions > a,
   .header-actions > button {
     flex: 1 1 auto;
+  }
+
+  .vocabulary-set-header .vocabulary-actions {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .vocabulary-set-header .vocabulary-actions > * {
+    height: 40px;
+    min-height: 40px;
+    transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  }
+
+  .vocabulary-set-header .vocabulary-actions > .vocabulary-action-button {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0 6px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .vocabulary-set-header .vocabulary-actions > .icon-action {
+    width: 40px;
+    min-width: 40px;
+    flex: 0 0 40px;
+  }
+
+  .vocabulary-set-header .vocabulary-actions > .icon-action img {
+    width: 26px;
+    height: 26px;
+  }
+
+  .vocabulary-set-header .vocabulary-actions > a {
+    display: grid;
+    width: 40px;
+    min-width: 40px;
+    flex: 0 0 40px;
+    padding: 0;
+    place-items: center;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .vocabulary-set-header .vocabulary-actions > :hover,
+  .vocabulary-set-header .vocabulary-actions > :focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(70, 70, 70, 0.14);
+  }
+
+  .vocabulary-set-header .vocabulary-actions > :active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(70, 70, 70, 0.12);
   }
 
   .vocabulary-toolbar {

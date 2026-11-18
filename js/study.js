@@ -2,7 +2,8 @@ import { STORES, addRecord, getAllRecords, getRecord, updateRecord } from './db.
 import { countSavedVocabularyInSet, listWordSets } from './word-sets.js';
 import { renderStudyCard, renderChooseQuestion, renderTypeQuestion, renderBlankQuestion } from '../pages/study-page.js';
 import { speakText } from './speech.js';
-import { scheduleReview, listDueVocabulary } from './review.js';
+import { scheduleReview } from './review.js';
+import { showConfirm } from './notifications.js';
 
 export async function getStudyOptions() {
   const [records, sets] = await Promise.all([
@@ -40,6 +41,18 @@ export async function saveCardRating(cardId, rating, difficult) {
     dueForReview: level === 'forgotten',
   });
   return scheduleReview(updated.id, level);
+}
+
+export async function saveCardStudyState(cardId, { memorized, difficult, dueForReview }) {
+  const record = await getRecord(STORES.vocabulary, cardId);
+  if (!record) throw new Error('Không tìm thấy từ đang học.');
+  const updated = await updateRecord(STORES.vocabulary, {
+    ...record,
+    ...(typeof memorized === 'boolean' ? { memorized } : {}),
+    ...(typeof difficult === 'boolean' ? { difficult } : {}),
+    ...(typeof dueForReview === 'boolean' ? { dueForReview } : {}),
+  });
+  return updated;
 }
 
 export function normalizeQuizAnswer(value) {
@@ -88,8 +101,6 @@ export async function initializeStudyPage() {
       option.textContent = `${set.name} (${countSavedVocabularyInSet(set, vocabularyIds)} từ)`;
       setSelect.append(option);
     });
-    const dueCount = (await listDueVocabulary()).length;
-    view.querySelector('[data-due-count]').textContent = `${dueCount} từ cần ôn hôm nay`;
   } catch (error) {
     message.textContent = `Không thể tải dữ liệu học: ${error.message}`;
     return;
@@ -97,7 +108,48 @@ export async function initializeStudyPage() {
 
   const showCard = () => {
     const card = cards[index];
+    difficult = Boolean(card.difficult);
     sessionView.innerHTML = renderStudyCard(card, direction, index, cards.length, flipped, difficult);
+  };
+
+  let cardTransitioning = false;
+  const transitionToCard = (targetIndex, directionOfMotion) => {
+    if (cardTransitioning || targetIndex < 0 || targetIndex >= cards.length) return;
+    const stage = sessionView.querySelector('.flashcard-stage');
+    const currentCard = stage?.querySelector('.flashcard');
+    if (!stage || !currentCard) {
+      index = targetIndex;
+      flipped = false;
+      difficult = Boolean(cards[index].difficult);
+      showCard();
+      return;
+    }
+
+    cardTransitioning = true;
+    const targetCard = cards[targetIndex];
+    const targetContainer = document.createElement('div');
+    targetContainer.innerHTML = renderStudyCard(targetCard, direction, targetIndex, cards.length, false, Boolean(targetCard.difficult));
+    const incomingCard = targetContainer.querySelector('.flashcard');
+    if (!incomingCard) {
+      cardTransitioning = false;
+      return;
+    }
+
+    incomingCard.classList.add(directionOfMotion === 'next'
+      ? 'is-entering-from-right'
+      : 'is-entering-from-left');
+    stage.append(incomingCard);
+    currentCard.classList.add(directionOfMotion === 'next'
+      ? 'is-leaving-to-left'
+      : 'is-leaving-to-right');
+
+    window.setTimeout(() => {
+      index = targetIndex;
+      flipped = false;
+      difficult = Boolean(cards[index].difficult);
+      showCard();
+      cardTransitioning = false;
+    }, 420);
   };
 
   const showQuizCard = () => {
@@ -160,7 +212,7 @@ export async function initializeStudyPage() {
         }
         index = 0;
         flipped = false;
-        difficult = false;
+        difficult = Boolean(cards[index]?.difficult);
         ratings = [];
         answers = [];
         sessionStartedAt = Date.now();
@@ -169,37 +221,41 @@ export async function initializeStudyPage() {
         if (mode === 'flashcard') showCard();
         else showQuizCard();
       }
-      if (action === 'start-review') {
-        cards = await listDueVocabulary();
-        if (!cards.length) {
-          message.textContent = 'Hôm nay chưa có từ nào đến lịch ôn.';
-          return;
-        }
-        mode = 'flashcard';
-        direction = 'en-vi';
-        index = 0;
-        flipped = false;
-        difficult = false;
-        ratings = [];
-        answers = [];
-        sessionStartedAt = Date.now();
-        setup.hidden = true;
-        sessionView.hidden = false;
-        showCard();
-      }
       if (action === 'mode') {
         view.querySelectorAll('[data-study-mode]').forEach((button) => button.classList.toggle('is-selected', button === actionElement));
       }
       if (action === 'flip') {
         flipped = !flipped;
-        showCard();
+        actionElement.classList.toggle('is-flipped', flipped);
+        actionElement.setAttribute('aria-label', flipped ? 'Lật về mặt gợi nhớ' : 'Lật để xem đáp án');
       }
       if (action === 'speak') {
         speakText(cards[index].word);
       }
       if (action === 'difficult') {
         difficult = !difficult;
+        await saveCardStudyState(cards[index].id, { difficult });
+        cards[index].difficult = difficult;
         showCard();
+      }
+      if (action === 'previous') {
+        if (index > 0) transitionToCard(index - 1, 'previous');
+      }
+      if (action === 'unlearned') {
+        ratings.push('forgotten');
+        await saveCardRating(cards[index].id, 'forgotten', difficult);
+        if (index === cards.length - 1) await finish();
+        else transitionToCard(index + 1, 'next');
+      }
+      if (action === 'learned') {
+        ratings.push('good');
+        await saveCardRating(cards[index].id, 'good', difficult);
+        if (index === cards.length - 1) await finish();
+        else transitionToCard(index + 1, 'next');
+      }
+      if (action === 'next') {
+        if (index === cards.length - 1) await finish();
+        else transitionToCard(index + 1, 'next');
       }
       if (action === 'speak-sentence') speakText(cards[index].example);
       if (actionElement.dataset.quizAnswer) {
@@ -215,22 +271,22 @@ export async function initializeStudyPage() {
         });
         window.setTimeout(() => advance(), 500);
       }
-      if (actionElement.dataset.studyRating) {
-        const rating = actionElement.dataset.studyRating;
-        ratings.push(rating);
-        await saveCardRating(cards[index].id, rating, difficult);
-        if (index === cards.length - 1) await finish();
-        else {
-          index += 1;
-          flipped = false;
-          difficult = false;
-          showCard();
-        }
-      }
       if (action === 'restart') {
         sessionView.hidden = true;
         setup.hidden = false;
         message.textContent = '';
+      }
+      if (action === 'exit') {
+        const confirmed = await showConfirm('Bạn có chắc muốn thoát khỏi buổi học này?', {
+          title: 'Thoát buổi học?',
+          confirmLabel: 'Thoát',
+          iconImage: 'image/nút xóa.png',
+        });
+        if (confirmed) {
+          sessionView.hidden = true;
+          setup.hidden = false;
+          message.textContent = '';
+        }
       }
     } catch (error) {
       console.error('Không thể xử lý phiên học:', error);
@@ -259,7 +315,7 @@ export async function initializeStudyPage() {
     answers.push({ cardId: card.id, answer, expected, correct });
     ratings.push(correct ? 'good' : 'forgotten');
     await saveCardRating(card.id, correct ? 'good' : 'forgotten', false);
-    sessionView.innerHTML = `<div class="quiz-result ${correct ? 'is-correct' : 'is-incorrect'}"><h2>${correct ? 'Chính xác!' : 'Chưa đúng'}</h2><p>Đáp án đúng: <strong>${escapeForDisplay(expected)}</strong></p><p>Nghĩa: ${escapeForDisplay(card.meaning)}</p><button class="primary-button" data-study-action="next-question" type="button">${index === cards.length - 1 ? 'Xem tổng kết' : 'Câu tiếp theo'}</button></div>`;
+    sessionView.innerHTML = `<div class="study-session-header"><button class="secondary-button study-exit-button" data-study-action="exit" type="button">Thoát</button></div><div class="quiz-result ${correct ? 'is-correct' : 'is-incorrect'}"><h2>${correct ? 'Chính xác!' : 'Chưa đúng'}</h2><p>Đáp án đúng: <strong>${escapeForDisplay(expected)}</strong></p><p>Nghĩa: ${escapeForDisplay(card.meaning)}</p><button class="primary-button" data-study-action="next-question" type="button">${index === cards.length - 1 ? 'Xem tổng kết' : 'Câu tiếp theo'}</button></div>`;
   });
 
   view.addEventListener('click', async (event) => {

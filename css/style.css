@@ -547,6 +547,18 @@ h2 {
   background: #fff1df;
 }
 
+.app-dialog-icon.has-image {
+  overflow: hidden;
+  padding: 4px;
+  background: transparent;
+}
+
+.app-dialog-icon.has-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .app-dialog-icon.error {
   color: #bd4f5d;
   background: #fff0f1;
@@ -1253,19 +1265,6 @@ button:disabled {
   font-size: 12px;
 }
 
-.review-start {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 13px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.review-start span {
-  flex: 1;
-}
-
 .rating-forgotten,
 .rating-hard,
 .rating-good,
@@ -1360,6 +1359,67 @@ button:disabled {
   text-align: center;
 }
 
+.study-start-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.study-start-button.study-start-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 170px;
+  min-height: 38px;
+  height: 38px;
+  padding: 6px 16px;
+  color: #fff;
+  background: var(--primary);
+  box-shadow: 0 10px 24px rgba(101, 89, 214, 0.24);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.study-start-character {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.study-start-button:active,
+.study-start-button:focus-visible,
+.study-start-button:hover {
+  color: #fff;
+  background: var(--primary);
+}
+
+.study-start-button:hover .study-start-character,
+.study-start-button:active .study-start-character {
+  animation: study-start-bounce 320ms ease-out;
+}
+
+@keyframes study-start-bounce {
+  0% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-8px) scale(1.06); }
+  70% { transform: translateY(2px) scale(0.98); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.study-session-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.study-exit-button {
+  min-height: 36px;
+  color: #bd4f5d;
+  border-color: #ecc2c7;
+  background: #fff5f6;
+}
+
 .study-progress {
   margin-bottom: 12px;
   color: var(--muted);
@@ -1372,22 +1432,102 @@ button:disabled {
   display: block;
   width: 100%;
   min-height: 290px;
-  padding: 35px 25px;
+  padding: 0;
   color: var(--ink);
-  background: linear-gradient(145deg, #fff, #f3f3f3);
-  border: 1px solid #e0e0e0;
+  background: transparent;
+  border: 0;
   border-radius: 20px;
-  box-shadow: var(--shadow);
+  perspective: 1200px;
   text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.flashcard-stage {
+  position: relative;
+  width: 100%;
+  min-height: 290px;
+  overflow: hidden;
+  border-radius: 20px;
+  perspective: 1200px;
+}
+
+.flashcard-stage > .flashcard.is-leaving-to-left,
+.flashcard-stage > .flashcard.is-leaving-to-right,
+.flashcard-stage > .flashcard.is-entering-from-right,
+.flashcard-stage > .flashcard.is-entering-from-left {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  will-change: transform;
+}
+
+.flashcard-stage > .flashcard.is-entering-from-right {
+  z-index: 3;
+  animation: flashcard-enter-from-right 420ms cubic-bezier(.22, .72, .22, 1) forwards;
+}
+
+.flashcard-stage > .flashcard.is-entering-from-left {
+  z-index: 3;
+  animation: flashcard-enter-from-left 420ms cubic-bezier(.22, .72, .22, 1) forwards;
+}
+
+.flashcard-stage > .flashcard.is-leaving-to-left {
+  animation: flashcard-leave-to-left 420ms cubic-bezier(.22, .72, .22, 1) forwards;
+}
+
+.flashcard-stage > .flashcard.is-leaving-to-right {
+  animation: flashcard-leave-to-right 420ms cubic-bezier(.22, .72, .22, 1) forwards;
+}
+
+@keyframes flashcard-enter-from-right {
+  from { transform: translateX(105%) rotateY(-7deg); }
+  to { transform: translateX(0) rotateY(0); }
+}
+
+@keyframes flashcard-enter-from-left {
+  from { transform: translateX(-105%) rotateY(7deg); }
+  to { transform: translateX(0) rotateY(0); }
+}
+
+@keyframes flashcard-leave-to-left {
+  from { transform: translateX(0) rotateY(0); }
+  to { transform: translateX(-105%) rotateY(7deg); }
+}
+
+@keyframes flashcard-leave-to-right {
+  from { transform: translateX(0) rotateY(0); }
+  to { transform: translateX(105%) rotateY(-7deg); }
+}
+
+.flashcard-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 290px;
+  transform-style: preserve-3d;
+  transition: transform 480ms cubic-bezier(.2, .7, .2, 1);
+}
+
+.flashcard.is-flipped .flashcard-inner {
+  transform: rotateY(180deg);
 }
 
 .flashcard-face {
+  position: absolute;
+  inset: 0;
   display: flex;
-  min-height: 215px;
+  min-height: 290px;
+  padding: 35px 25px;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   gap: 13px;
+  background: linear-gradient(145deg, #fff, #f3f3f3);
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  backface-visibility: hidden;
 }
 
 .flashcard-face small {
@@ -1417,7 +1557,8 @@ button:disabled {
 }
 
 .flashcard-back {
-  border-top: 1px dashed #d0d0d0;
+  border-top: 0;
+  transform: rotateY(180deg);
 }
 
 .study-actions,
@@ -1428,6 +1569,70 @@ button:disabled {
   flex-wrap: wrap;
   gap: 9px;
   margin-top: 15px;
+}
+
+.study-actions.flashcard-controls {
+  flex-wrap: nowrap;
+}
+
+.study-actions.flashcard-controls,
+.study-actions.flashcard-control-row {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.flashcard-control {
+  display: inline-flex;
+  width: 42px;
+  min-width: 42px;
+  height: 38px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  color: #5f5f78;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.flashcard-control.is-selected {
+  color: #bd7223;
+  background: #fff1df;
+  border-color: #f4d1a4;
+}
+
+.flashcard-speak {
+  width: 48px;
+  min-width: 48px;
+}
+
+.flashcard-speak img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.flashcard-difficult {
+  font-size: 16px;
+}
+
+@media (max-width: 420px) {
+  .study-actions.flashcard-controls {
+    gap: 6px;
+  }
+
+  .flashcard-control {
+    width: 36px;
+    min-width: 36px;
+  }
+
+  .flashcard-speak {
+    width: 42px;
+    min-width: 42px;
+  }
 }
 
 .secondary-button.is-selected {

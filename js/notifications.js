@@ -38,6 +38,7 @@ function showDialog({
   cancelLabel = '',
   input = false,
   selectOptions = [],
+  iconImage = '',
 }) {
   if (activeDialog) closeDialog(false);
 
@@ -46,7 +47,7 @@ function showDialog({
     overlay.className = 'app-dialog-overlay';
     overlay.innerHTML = `
       <section class="app-dialog" role="dialog" aria-modal="true" aria-labelledby="app-dialog-title">
-        <div class="app-dialog-icon ${type}" aria-hidden="true">${type === 'error' ? '!' : type === 'warning' ? '!' : '✓'}</div>
+        <div class="app-dialog-icon ${type}${iconImage ? ' has-image' : ''}" aria-hidden="true">${iconImage ? `<img src="${iconImage}" alt="">` : type === 'error' ? '!' : type === 'warning' ? '!' : '✓'}</div>
         <div class="app-dialog-content">
           <h2 id="app-dialog-title">${title}</h2>
           <p class="app-dialog-message"></p>
@@ -93,13 +94,14 @@ export function showAlert(message, { title = 'Có một chút trục trặc', ty
   return showDialog({ title, message, type, confirmLabel: 'Đã hiểu' });
 }
 
-export function showConfirm(message, { title = 'Bạn muốn tiếp tục?', confirmLabel = 'Tiếp tục' } = {}) {
+export function showConfirm(message, { title = 'Bạn muốn tiếp tục?', confirmLabel = 'Tiếp tục', iconImage = '' } = {}) {
   return showDialog({
     title,
     message,
     type: 'warning',
     confirmLabel,
     cancelLabel: 'Hủy',
+    iconImage,
   });
 }
 

@@ -4,6 +4,10 @@ function escapeHtml(value) {
   }[character]));
 }
 
+function renderStudyExit() {
+  return '<div class="study-session-header"><button class="secondary-button study-exit-button" data-study-action="exit" type="button">Thoát</button></div>';
+}
+
 export function renderStudy() {
   return `
     <header class="page-header"><div><p class="eyebrow">LUYỆN TẬP</p><h1>Kiểm tra từ vựng</h1></div></header>
@@ -21,8 +25,7 @@ export function renderStudy() {
         <label>Chiều học<select data-study-direction><option value="en-vi">English → Tiếng Việt</option><option value="vi-en">Tiếng Việt → English</option></select></label>
       </div>
       <p class="study-message" data-study-message></p>
-      <div class="review-start"><span data-due-count>Đang tính số từ cần ôn...</span><button class="secondary-button" data-study-action="start-review" type="button">Ôn từ cần ôn</button></div>
-      <button class="primary-button" data-study-action="start" type="button">Bắt đầu học</button>
+      <div class="study-start-row"><button class="primary-button study-start-button" data-study-action="start" type="button"><img class="study-start-character" src="image/nútbatdauhoc.png" alt=""><span>Bắt đầu học</span></button></div>
     </section>
     <section class="study-session" data-study-session hidden></section>
   `;
@@ -32,28 +35,36 @@ export function renderStudyCard(card, direction, index, total, flipped = false, 
   const front = direction === 'en-vi' ? card.word : card.meaning;
   const answer = direction === 'en-vi' ? card.meaning : card.word;
   return `
+    ${renderStudyExit()}
     <div class="study-progress">Thẻ ${index + 1} / ${total}</div>
-    <button class="flashcard ${flipped ? 'is-flipped' : ''}" data-study-action="flip" type="button">
-      <span class="flashcard-face flashcard-front"><small>Gợi nhớ</small><strong>${escapeHtml(front)}</strong><em>Nhấn để lật thẻ</em></span>
-      <span class="flashcard-face flashcard-back"><small>Đáp án</small><strong>${escapeHtml(answer)}</strong><span>${escapeHtml(card.pronunciation || 'Chưa có phiên âm')}</span>${card.example ? `<em>“${escapeHtml(card.example)}”</em>` : ''}</span>
-    </button>
-    <div class="study-actions">
-      <button class="secondary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button>
-      <button class="secondary-button ${difficult ? 'is-selected' : ''}" data-study-action="difficult" type="button">⚑ ${difficult ? 'Từ khó' : 'Đánh dấu từ khó'}</button>
+    <div class="flashcard-stage">
+      <button class="flashcard ${flipped ? 'is-flipped' : ''}" data-study-action="flip" type="button" aria-label="${flipped ? 'Lật về mặt gợi nhớ' : 'Lật để xem đáp án'}">
+        <span class="flashcard-inner">
+          <span class="flashcard-face flashcard-front"><small>Gợi nhớ</small><strong>${escapeHtml(front)}</strong><em>Nhấn để xem đáp án</em></span>
+          <span class="flashcard-face flashcard-back"><small>Đáp án</small><strong>${escapeHtml(answer)}</strong><span>${escapeHtml(card.pronunciation || 'Chưa có phiên âm')}</span>${card.example ? `<em>“${escapeHtml(card.example)}”</em>` : ''}</span>
+        </span>
+      </button>
     </div>
-    ${flipped ? `<div class="rating-actions"><p>Bạn nhớ từ này đến đâu?</p><button class="rating-forgotten" data-study-rating="forgotten" type="button">Quên</button><button class="rating-hard" data-study-rating="hard" type="button">Khó</button><button class="rating-good" data-study-rating="good" type="button">Tốt</button><button class="rating-easy" data-study-rating="easy" type="button">Dễ</button></div>` : ''}
+    <div class="study-actions flashcard-controls">
+      <button class="flashcard-control" data-study-action="previous" type="button" aria-label="Từ trước">&lt;&lt;</button>
+      <button class="flashcard-control" data-study-action="unlearned" type="button" aria-label="Chưa học">&lt;</button>
+      <button class="flashcard-control flashcard-speak speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button>
+      <button class="flashcard-control" data-study-action="learned" type="button" aria-label="Đã học">&gt;</button>
+      <button class="flashcard-control" data-study-action="next" type="button" aria-label="Từ tiếp theo">&gt;&gt;</button>
+      <button class="flashcard-control flashcard-difficult ${difficult ? 'is-selected' : ''}" data-study-action="difficult" type="button" aria-label="${difficult ? 'Bỏ đánh dấu từ khó' : 'Đánh dấu từ khó'}">🚩</button>
+    </div>
   `;
 }
 
 export function renderChooseQuestion(card, options, index, total) {
-  return `<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ CHỌN NGHĨA</small><h2>Nghe từ rồi chọn đáp án</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><div class="answer-options">${options.map((option) => `<button class="answer-option" data-quiz-answer="${escapeHtml(option.id)}" type="button">${escapeHtml(option.meaning)}</button>`).join('')}</div>`;
+  return `${renderStudyExit()}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ CHỌN NGHĨA</small><h2>Nghe từ rồi chọn đáp án</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><div class="answer-options">${options.map((option) => `<button class="answer-option" data-quiz-answer="${escapeHtml(option.id)}" type="button">${escapeHtml(option.meaning)}</button>`).join('')}</div>`;
 }
 
 export function renderTypeQuestion(card, index, total) {
-  return `<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ GÕ TỪ</small><h2>Nghe và nhập từ tiếng Anh</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Câu trả lời" placeholder="Nhập từ bạn nghe được" required><button class="primary-button" type="submit">Kiểm tra</button></form>`;
+  return `${renderStudyExit()}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ GÕ TỪ</small><h2>Nghe và nhập từ tiếng Anh</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Câu trả lời" placeholder="Nhập từ bạn nghe được" required><button class="primary-button" type="submit">Kiểm tra</button></form>`;
 }
 
 export function renderBlankQuestion(card, index, total) {
   const sentence = card.example.replace(new RegExp(card.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '_____');
-  return `<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>FILL IN THE BLANK</small><h2>Điền từ còn thiếu</h2><p class="sentence-prompt">${escapeHtml(sentence)}</p><p class="meaning-hint">${escapeHtml(card.meaning)}</p></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Từ còn thiếu" placeholder="Nhập từ còn thiếu" required><button class="primary-button" type="submit">Kiểm tra</button></form><button class="secondary-button speech-image-button" data-study-action="speak-sentence" type="button" aria-label="Phát âm cả câu"><img src="image/logo trên sidebar2.png" alt=""></button>`;
+  return `${renderStudyExit()}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>FILL IN THE BLANK</small><h2>Điền từ còn thiếu</h2><p class="sentence-prompt">${escapeHtml(sentence)}</p><p class="meaning-hint">${escapeHtml(card.meaning)}</p></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Từ còn thiếu" placeholder="Nhập từ còn thiếu" required><button class="primary-button" type="submit">Kiểm tra</button></form><button class="secondary-button speech-image-button" data-study-action="speak-sentence" type="button" aria-label="Phát âm cả câu"><img src="image/logo trên sidebar2.png" alt=""></button>`;
 }

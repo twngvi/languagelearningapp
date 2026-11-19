@@ -2689,6 +2689,96 @@ button:disabled {
   margin-left: auto;
 }
 
+.vocabulary-set-page .vocabulary-row {
+  gap: 12px;
+  padding: 9px 4px;
+}
+
+.vocabulary-set-page .favorite-button,
+.vocabulary-set-page .favorite-button:hover {
+  padding: 0;
+  color: #b4b6c6;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.vocabulary-set-page .favorite-button:hover,
+.vocabulary-set-page .favorite-button.is-favorite {
+  color: #e6a637;
+}
+
+.vocabulary-set-page .favorite-button.is-favorite {
+  text-shadow: none;
+}
+
+.vocabulary-row-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.vocabulary-set-page .vocabulary-row-menu-trigger {
+  display: grid;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 7px;
+  place-items: center;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+}
+
+.vocabulary-set-page .vocabulary-row-menu-trigger:hover,
+.vocabulary-set-page .vocabulary-row-menu-trigger:focus-visible {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--set-color) 14%, white);
+}
+
+.vocabulary-row-menu-trigger svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.vocabulary-row-menu-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 132px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 8px 22px rgba(37, 36, 77, 0.14);
+}
+
+.vocabulary-set-page .vocabulary-row-menu-options button {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: left;
+}
+
+.vocabulary-set-page .vocabulary-row-menu-options button:hover,
+.vocabulary-set-page .vocabulary-row-menu-options button:focus-visible {
+  background: color-mix(in srgb, var(--set-color) 14%, white);
+}
+
+.vocabulary-set-page .vocabulary-row-menu-options button.is-danger {
+  color: #c44d5b;
+}
+
 .vocabulary-row {
   display: flex;
   align-items: center;
@@ -3001,6 +3091,38 @@ button:disabled {
   .detail-word-fields {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .vocabulary-set-page:not(.is-selection-mode) .vocabulary-select-checkbox {
+    display: none;
+  }
+
+  .vocabulary-set-page .learning-status,
+  .vocabulary-set-page .word-meta.is-only-learning {
+    display: none;
+  }
+
+  .vocabulary-set-page .vocabulary-row {
+    gap: 8px;
+    padding-block: 8px;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .vocabulary-set-page .vocabulary-row.is-selected,
+  .vocabulary-set-page .vocabulary-row.is-selected * {
+    font-weight: 700;
+  }
+
+  .vocabulary-set-page .vocabulary-row.is-selected .word-info h3,
+  .vocabulary-set-page .vocabulary-row.is-selected .word-meaning {
+    font-weight: 800;
+  }
+
+  .vocabulary-set-page .vocabulary-row.is-selected .favorite-button,
+  .vocabulary-set-page .vocabulary-row.is-selected .speech-image-button,
+  .vocabulary-set-page .vocabulary-row.is-selected .vocabulary-row-menu-trigger {
+    font-weight: 400;
   }
 
   .vocabulary-set-page .row-actions {

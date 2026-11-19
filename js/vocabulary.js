@@ -50,7 +50,39 @@ export async function initializeVocabularySetPage() {
   const selectionToolbar = view.querySelector('[data-vocabulary-selection-toolbar]');
   const selectedCount = view.querySelector('[data-vocabulary-selected-count]');
   const selectedVocabularyIds = new Set();
+  let longPressTimer = null;
+  let longPressPointerId = null;
+  let longPressStartX = 0;
+  let longPressStartY = 0;
+  let completedLongPressPointerId = null;
+  let completedLongPressVocabularyId = '';
+  let suppressedLongPressClickId = '';
+  let suppressedLongPressClickTimer = null;
   let editingDetailId = '';
+  const closeVocabularyRowMenus = () => {
+    list.querySelectorAll('[data-vocabulary-row-menu]').forEach((menu) => {
+      menu.hidden = true;
+      menu.closest('.vocabulary-row-menu')
+        ?.querySelector('[data-vocabulary-action="menu"]')
+        ?.setAttribute('aria-expanded', 'false');
+    });
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer !== null) window.clearTimeout(longPressTimer);
+    longPressTimer = null;
+    longPressPointerId = null;
+  };
+  const clearLongPressClickSuppression = () => {
+    if (suppressedLongPressClickTimer !== null) window.clearTimeout(suppressedLongPressClickTimer);
+    suppressedLongPressClickTimer = null;
+    suppressedLongPressClickId = '';
+  };
+  const syncSelectionMode = () => {
+    const selectionMode = selectedVocabularyIds.size > 0;
+    detailPage.classList.toggle('is-selection-mode', selectionMode);
+    selectionToolbar.hidden = !selectionMode;
+    selectedCount.textContent = `${selectedVocabularyIds.size} từ`;
+  };
   const syncDetailColor = (color) => {
     const normalizedColor = normalizeWordSetColor(color);
     detailForm.querySelector('[name="color"]').value = normalizedColor;
@@ -88,13 +120,96 @@ export async function initializeVocabularySetPage() {
       if (cb) cb.checked = true;
       row.classList.add('is-selected');
     });
-    selectionToolbar.hidden = selectedVocabularyIds.size === 0;
-    selectedCount.textContent = `${selectedVocabularyIds.size} từ`;
+    syncSelectionMode();
   };
   search.addEventListener('input', renderSetList);
   renderSetList();
 
+  list.addEventListener('pointerdown', (event) => {
+    clearLongPressClickSuppression();
+    if (longPressTimer !== null) cancelLongPress();
+    if (event.pointerType !== 'touch' || event.button !== 0
+      || !window.matchMedia('(max-width: 720px)').matches
+      || selectedVocabularyIds.size > 0) return;
+    if (event.target.closest('button, input, select, textarea, a, label, [contenteditable="true"]')) return;
+    const row = event.target.closest('.vocabulary-row[data-vocabulary-id]');
+    if (!row) return;
+
+    completedLongPressPointerId = null;
+    completedLongPressVocabularyId = '';
+    longPressPointerId = event.pointerId;
+    longPressStartX = event.clientX;
+    longPressStartY = event.clientY;
+    longPressTimer = window.setTimeout(() => {
+      longPressTimer = null;
+      if (!row.isConnected || selectedVocabularyIds.size > 0) {
+        longPressPointerId = null;
+        return;
+      }
+      const vocabularyId = row.dataset.vocabularyId;
+      selectedVocabularyIds.add(vocabularyId);
+      row.classList.add('is-selected');
+      const checkbox = row.querySelector('[data-vocabulary-select]');
+      if (checkbox) checkbox.checked = true;
+      completedLongPressPointerId = event.pointerId;
+      completedLongPressVocabularyId = vocabularyId;
+      syncSelectionMode();
+    }, 500);
+  }, { passive: true });
+  list.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== longPressPointerId || longPressTimer === null) return;
+    if (Math.hypot(event.clientX - longPressStartX, event.clientY - longPressStartY) > 10) {
+      cancelLongPress();
+    }
+  }, { passive: true });
+  list.addEventListener('pointerup', (event) => {
+    const completedLongPress = completedLongPressPointerId === event.pointerId;
+    const vocabularyId = completedLongPressVocabularyId;
+    cancelLongPress();
+    if (!completedLongPress) return;
+
+    completedLongPressPointerId = null;
+    completedLongPressVocabularyId = '';
+    suppressedLongPressClickId = vocabularyId;
+    suppressedLongPressClickTimer = window.setTimeout(clearLongPressClickSuppression, 1000);
+  });
+  list.addEventListener('pointercancel', (event) => {
+    const completedLongPress = completedLongPressPointerId === event.pointerId;
+    cancelLongPress();
+    if (completedLongPress) {
+      completedLongPressPointerId = null;
+      completedLongPressVocabularyId = '';
+      clearLongPressClickSuppression();
+    }
+  });
+  list.addEventListener('click', (event) => {
+    if (!window.matchMedia('(max-width: 720px)').matches || selectedVocabularyIds.size === 0) return;
+    const row = event.target.closest('.vocabulary-row[data-vocabulary-id]');
+    if (!row) return;
+    const vocabularyId = row.dataset.vocabularyId;
+    if (suppressedLongPressClickId === vocabularyId) {
+      clearLongPressClickSuppression();
+      return;
+    }
+    if (event.target.closest('button, input, select, textarea, a, label, [contenteditable="true"]')) return;
+    if (selectedVocabularyIds.has(vocabularyId)) selectedVocabularyIds.delete(vocabularyId);
+    else selectedVocabularyIds.add(vocabularyId);
+    renderSetList();
+  });
+
   view.addEventListener('click', async (event) => {
+    const menuTrigger = event.target.closest('[data-vocabulary-action="menu"]');
+    if (menuTrigger) {
+      const menu = menuTrigger.closest('.vocabulary-row-menu')?.querySelector('[data-vocabulary-row-menu]');
+      const shouldOpen = menu?.hidden;
+      closeVocabularyRowMenus();
+      if (menu && shouldOpen) {
+        menu.hidden = false;
+        menuTrigger.setAttribute('aria-expanded', 'true');
+      }
+      return;
+    }
+    closeVocabularyRowMenus();
     const selectionAction = event.target.closest('[data-set-detail-action]')?.dataset.setDetailAction;
     if (selectionAction === 'sort-alpha') {
       sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';

@@ -1,4 +1,5 @@
-const CACHE_NAME = 'personal-language-app-core-v37';
+const CACHE_NAME = 'personal-language-app-core-v40';
+const IS_LOCAL_DEVELOPMENT = ['localhost', '127.0.0.1'].includes(self.location.hostname);
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -65,6 +66,21 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => caches.match('./index.html')),
+    );
+    return;
+  }
+
+  if (IS_LOCAL_DEVELOPMENT) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request)),
     );
     return;
   }

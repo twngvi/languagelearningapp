@@ -2812,11 +2812,17 @@ button:disabled {
   z-index: 20;
   display: grid;
   min-width: 132px;
+  overflow-y: auto;
   padding: 5px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
   box-shadow: 0 8px 22px rgba(37, 36, 77, 0.14);
+}
+
+.vocabulary-row-menu-options.opens-up {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 
 .vocabulary-set-page .vocabulary-row-menu-options button {

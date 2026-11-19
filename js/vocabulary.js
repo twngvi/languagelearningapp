@@ -62,6 +62,8 @@ export async function initializeVocabularySetPage() {
   const closeVocabularyRowMenus = () => {
     list.querySelectorAll('[data-vocabulary-row-menu]').forEach((menu) => {
       menu.hidden = true;
+      menu.classList.remove('opens-up');
+      menu.style.maxHeight = '';
       menu.closest('.vocabulary-row-menu')
         ?.querySelector('[data-vocabulary-action="menu"]')
         ?.setAttribute('aria-expanded', 'false');
@@ -203,6 +205,18 @@ export async function initializeVocabularySetPage() {
       closeVocabularyRowMenus();
       if (menu && shouldOpen) {
         menu.hidden = false;
+        const triggerRect = menuTrigger.getBoundingClientRect();
+        const mobileNav = window.matchMedia('(max-width: 700px)').matches
+          ? document.querySelector('.sidebar')
+          : null;
+        const bottomBoundary = mobileNav?.getBoundingClientRect().top ?? window.innerHeight;
+        const menuHeight = menu.scrollHeight;
+        const availableAbove = Math.max(0, triggerRect.top - 16);
+        const availableBelow = Math.max(0, bottomBoundary - triggerRect.bottom - 4);
+        const opensUp = availableBelow < menuHeight && availableAbove > availableBelow;
+        const availableSpace = opensUp ? availableAbove : availableBelow;
+        menu.classList.toggle('opens-up', opensUp);
+        menu.style.maxHeight = `${Math.min(menuHeight, availableSpace)}px`;
         menuTrigger.setAttribute('aria-expanded', 'true');
       }
       return;
@@ -790,7 +804,7 @@ export async function initializeVocabularyPage() {
     renderWordSetPicker();
     setList.innerHTML = wordSets.length ? wordSets.map((set, index) => `
       <article class="word-set-card" data-set-id="${set.id}" style="--set-color: ${normalizeWordSetColor(set.color)}">
-        <img class="word-set-card-decoration" data-set-action="edit" src="image/hình gắn trên card bộ từ/${(index % 6) + 4}.png" alt="Chỉnh sửa bộ từ" role="button" tabindex="0">
+        <img class="word-set-card-decoration" data-set-open src="image/hình gắn trên card bộ từ/${(index % 6) + 4}.png" alt="">
         <div class="word-set-card-content" data-set-open><h3>${set.name}</h3><span class="word-set-count">${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></div>
         <div class="row-actions"><button class="secondary-button" data-set-action="add-word" type="button">+ Thêm từ</button><button class="secondary-button" data-set-action="manage" type="button">Quản lý từ</button><button class="icon-action edit-image-button" data-set-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-set-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button></div>
       </article>`).join('') : '<p class="empty-state">Chưa có bộ từ nào.</p>';
@@ -1095,6 +1109,7 @@ export async function initializeVocabularyPage() {
       && !setForm.contains(event.target)
       && !event.target.closest('[data-vocabulary-action="sets"]')
       && !event.target.closest('[data-set-action="edit"]')
+      && !event.target.closest('[data-set-open]')
     ) {
       event.preventDefault();
       event.stopPropagation();

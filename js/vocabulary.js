@@ -35,6 +35,14 @@ export async function initializeVocabularySetPage() {
   const setRecords = wordSet.vocabularyIds.map((id) => recordsById.get(id)).filter(Boolean);
   const setTitle = view.querySelector('[data-vocabulary-set-title]');
   setTitle.firstChild.textContent = `${wordSet.name} `;
+  const backToTopButton = view.querySelector('[data-vocabulary-set-back-to-top]');
+  const backToTopObserver = new IntersectionObserver(([entry]) => {
+    backToTopButton.hidden = entry.isIntersecting;
+  });
+  backToTopObserver.observe(view.querySelector('.vocabulary-set-header'));
+  backToTopButton.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
   const detailForm = view.querySelector('[data-set-detail-form]');
   const detailVocabularyForm = view.querySelector('[data-detail-vocabulary-form]');
   const detailBulkForm = view.querySelector('[data-detail-bulk-form]');
@@ -115,6 +123,7 @@ export async function initializeVocabularySetPage() {
           if (!await showConfirm(`Xóa vĩnh viễn ${selectedRecords.length} từ khỏi kho từ vựng và tất cả bộ từ?`, {
             title: 'Xóa từ đã chọn?',
             confirmLabel: 'Xóa vĩnh viễn',
+            destructive: true,
           })) return;
           for (const record of selectedRecords) await removeVocabulary(record.id);
         } else {
@@ -182,6 +191,7 @@ export async function initializeVocabularySetPage() {
       if (vocabularyAction === 'delete' && record && await showConfirm(`Xóa vĩnh viễn từ "${record.word}" khỏi kho từ vựng và tất cả bộ từ?`, {
         title: 'Xóa từ vựng?',
         confirmLabel: 'Xóa vĩnh viễn',
+        destructive: true,
       })) {
         await removeVocabulary(record.id);
         const index = setRecords.findIndex((item) => item.id === record.id);
@@ -227,6 +237,7 @@ export async function initializeVocabularySetPage() {
       if (action === 'delete' && await showConfirm(`Xóa bộ từ "${wordSet.name}"? Từ vựng sẽ vẫn được giữ lại.`, {
         title: 'Xóa bộ từ?',
         confirmLabel: 'Xóa bộ từ',
+        destructive: true,
       })) {
         await removeWordSet(wordSet.id);
         window.location.hash = '#vocabulary';
@@ -899,6 +910,7 @@ export async function initializeVocabularyPage() {
         const confirmed = await showConfirm(`Xóa từ "${record.word}"? Dữ liệu học liên quan có thể không được khôi phục.`, {
           title: 'Xóa từ vựng?',
           confirmLabel: 'Xóa từ',
+          destructive: true,
         });
         if (confirmed) {
           await removeVocabulary(record.id);
@@ -995,6 +1007,7 @@ export async function initializeVocabularyPage() {
       if (actionElement.dataset.setAction === 'delete' && await showConfirm(`Xóa bộ từ "${set.name}"? Từ vựng sẽ vẫn được giữ lại.`, {
         title: 'Xóa bộ từ?',
         confirmLabel: 'Xóa bộ từ',
+        destructive: true,
       })) {
         await removeWordSet(set.id);
         await load();

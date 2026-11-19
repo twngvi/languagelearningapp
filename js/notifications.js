@@ -39,6 +39,7 @@ function showDialog({
   input = false,
   selectOptions = [],
   iconImage = '',
+  destructive = false,
 }) {
   if (activeDialog) closeDialog(false);
 
@@ -54,9 +55,9 @@ function showDialog({
           ${input ? '<input class="app-dialog-input" type="text" autocomplete="off">' : ''}
           ${selectOptions.length ? `<select class="app-dialog-select">${selectOptions.map(({ value, label }) => `<option value="${escapeDialogText(value)}">${escapeDialogText(label)}</option>`).join('')}</select>` : ''}
         </div>
-        <div class="app-dialog-actions">
+        <div class="app-dialog-actions${destructive ? ' is-destructive' : ''}">
           ${cancelLabel ? `<button class="secondary-button app-dialog-cancel" type="button">${cancelLabel}</button>` : ''}
-          <button class="primary-button app-dialog-confirm" type="button">${confirmLabel}</button>
+          <button class="primary-button app-dialog-confirm" type="button">${destructive ? '<img class="app-dialog-confirm-icon" src="image/nút xóa.png" alt="">' : ''}${confirmLabel}</button>
         </div>
       </section>`;
 
@@ -94,7 +95,12 @@ export function showAlert(message, { title = 'Có một chút trục trặc', ty
   return showDialog({ title, message, type, confirmLabel: 'Đã hiểu' });
 }
 
-export function showConfirm(message, { title = 'Bạn muốn tiếp tục?', confirmLabel = 'Tiếp tục', iconImage = '' } = {}) {
+export function showConfirm(message, {
+  title = 'Bạn muốn tiếp tục?',
+  confirmLabel = 'Tiếp tục',
+  iconImage = '',
+  destructive = false,
+} = {}) {
   return showDialog({
     title,
     message,
@@ -102,6 +108,7 @@ export function showConfirm(message, { title = 'Bạn muốn tiếp tục?', con
     confirmLabel,
     cancelLabel: 'Hủy',
     iconImage,
+    destructive,
   });
 }
 

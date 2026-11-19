@@ -51,8 +51,8 @@ export function renderVocabularySet(setId) {
     <header class="page-header vocabulary-set-header">
       <div><p class="eyebrow">BỘ TỪ</p><h1 data-vocabulary-set-title tabindex="0" title="Bấm để sửa tên">Đang tải bộ từ... <span class="record-count" data-vocabulary-set-count>0</span></h1></div>
       <div class="header-actions vocabulary-actions">
-        <button class="primary-button vocabulary-action-button vocabulary-action-new" data-set-detail-action="new-word" type="button">+ Thêm từ</button>
-        <button class="secondary-button vocabulary-action-button vocabulary-action-bulk" data-set-detail-action="bulk" type="button">Nhập hàng loạt</button>
+        <button class="primary-button vocabulary-action-button vocabulary-action-new" data-set-detail-action="new-word" type="button" aria-label="Thêm từ" title="Thêm từ"><img src="image/nút them từ.png" alt=""></button>
+        <button class="secondary-button vocabulary-action-button vocabulary-action-bulk" data-set-detail-action="bulk" type="button" aria-label="Nhập hàng loạt" title="Nhập hàng loạt"><img src="image/nút nhap hang loat.png" alt=""></button>
         <button class="icon-action edit-image-button" data-set-detail-action="edit" type="button" aria-label="Chỉnh sửa bộ từ"><img src="image/Shinam.png" alt=""></button>
         <button class="icon-action delete-image-button" data-set-detail-action="delete" type="button" aria-label="Xóa bộ từ"><img src="image/nút xóa.png" alt=""></button>
         <a class="secondary-button" href="#vocabulary" aria-label="Quay lại kho từ vựng" title="Quay lại kho từ vựng">←</a>
@@ -106,6 +106,9 @@ export function renderVocabularySet(setId) {
       </div>
       <div class="vocabulary-list" data-vocabulary-set-list data-set-id="${escapeHtml(setId)}"><p class="empty-state">Đang tải dữ liệu...</p></div>
     </section>
+    <button class="vocabulary-back-to-top" data-vocabulary-set-back-to-top type="button" aria-label="Quay lại đầu danh sách từ vựng" title="Quay lại đầu danh sách từ vựng" hidden>
+      <img src="image/1.png" alt="">
+    </button>
   `;
 }
 

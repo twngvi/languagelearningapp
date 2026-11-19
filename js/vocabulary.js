@@ -128,9 +128,7 @@ export async function initializeVocabularySetPage() {
   list.addEventListener('pointerdown', (event) => {
     clearLongPressClickSuppression();
     if (longPressTimer !== null) cancelLongPress();
-    if (event.pointerType !== 'touch' || event.button !== 0
-      || !window.matchMedia('(max-width: 720px)').matches
-      || selectedVocabularyIds.size > 0) return;
+    if (event.button !== 0 || selectedVocabularyIds.size > 0) return;
     if (event.target.closest('button, input, select, textarea, a, label, [contenteditable="true"]')) return;
     const row = event.target.closest('.vocabulary-row[data-vocabulary-id]');
     if (!row) return;
@@ -183,7 +181,7 @@ export async function initializeVocabularySetPage() {
     }
   });
   list.addEventListener('click', (event) => {
-    if (!window.matchMedia('(max-width: 720px)').matches || selectedVocabularyIds.size === 0) return;
+    if (selectedVocabularyIds.size === 0) return;
     const row = event.target.closest('.vocabulary-row[data-vocabulary-id]');
     if (!row) return;
     const vocabularyId = row.dataset.vocabularyId;
@@ -250,6 +248,8 @@ export async function initializeVocabularySetPage() {
           const targetId = await showSelectPrompt('Chọn bộ từ muốn chuyển các từ đã chọn đến:', {
             title: 'Di chuyển từ đã chọn',
             options: otherSets.map((set) => ({ value: set.id, label: set.name })),
+            compactActions: true,
+            confirmIconImage: 'image/2.png',
           });
           if (!targetId) return;
           const targetSet = otherSets.find((set) => set.id === targetId);

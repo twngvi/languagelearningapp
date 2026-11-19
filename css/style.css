@@ -530,6 +530,10 @@ h2 {
   animation: dialog-slide-in 180ms ease-out forwards;
 }
 
+.app-dialog.has-select {
+  overflow: visible;
+}
+
 .app-dialog-icon {
   display: grid;
   width: 38px;
@@ -600,21 +604,47 @@ h2 {
 }
 
 .app-dialog-select {
-  width: 100%;
-  min-height: 42px;
   margin-top: 16px;
-  padding: 9px 11px;
-  color: var(--ink);
-  background: var(--background);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  outline: 0;
-  font: inherit;
 }
 
-.app-dialog-select:focus {
+.app-dialog-select .custom-select-trigger {
+  min-height: 44px;
+  color: var(--ink);
+  background-color: var(--background);
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.app-dialog-select .custom-select-trigger:focus-visible {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(101, 89, 214, 0.12);
+}
+
+.app-dialog-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 40;
+  right: 0;
+  left: 0;
+  max-height: min(220px, 40vh);
+  border-color: var(--line);
+}
+
+.app-dialog-select-menu.opens-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.app-dialog-select-menu[hidden] {
+  display: none;
+}
+
+.app-dialog-select-option {
+  min-height: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-dialog-actions {
@@ -630,14 +660,14 @@ h2 {
   min-height: 38px;
 }
 
-.app-dialog-actions.is-destructive .app-dialog-cancel {
+.app-dialog-actions.is-compact .app-dialog-cancel {
   flex: 0 0 82px;
   width: auto;
   padding-right: 8px;
   padding-left: 8px;
 }
 
-.app-dialog-actions.is-destructive .app-dialog-confirm {
+.app-dialog-actions.is-compact .app-dialog-confirm {
   display: flex;
   flex: 1 1 0;
   align-items: center;
@@ -2352,6 +2382,37 @@ button:disabled {
   background: color-mix(in srgb, var(--set-color) 86%, #493744);
 }
 
+.vocabulary-set-header .vocabulary-actions > .vocabulary-action-button,
+.vocabulary-set-header .vocabulary-actions > .icon-action,
+.vocabulary-set-header .vocabulary-actions > a {
+  display: inline-flex;
+  width: 44px;
+  min-width: 44px;
+  height: 40px;
+  min-height: 40px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  color: color-mix(in srgb, var(--set-color) 76%, #493744);
+  background: color-mix(in srgb, var(--set-color) 24%, white);
+  border-color: color-mix(in srgb, var(--set-color) 48%, white);
+  border-radius: 9px;
+}
+
+.vocabulary-set-header .vocabulary-actions > .vocabulary-action-button img,
+.vocabulary-set-header .vocabulary-actions > .icon-action img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.vocabulary-set-header .vocabulary-actions > :hover,
+.vocabulary-set-header .vocabulary-actions > :focus-visible {
+  background: color-mix(in srgb, var(--set-color) 38%, white);
+  border-color: var(--set-color);
+}
+
 .vocabulary-set-page .word-set-form .color-swatch {
   color: inherit;
   background: var(--swatch-color);
@@ -2984,8 +3045,8 @@ button:disabled {
 
 .vocabulary-select-checkbox input {
   appearance: none;
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
   margin: 0;
   position: relative;
   cursor: pointer;
@@ -3001,16 +3062,16 @@ button:disabled {
 }
 
 .vocabulary-select-checkbox input:checked {
-  background: var(--set-color);
-  border-color: var(--set-color);
+  background: color-mix(in srgb, var(--set-color) 56%, #403243);
+  border-color: color-mix(in srgb, var(--set-color) 56%, #403243);
   box-shadow: 0 3px 8px color-mix(in srgb, var(--set-color) 25%, transparent);
   transform: scale(1.05);
 }
 
 .vocabulary-select-checkbox input:checked::after {
   position: absolute;
-  top: 1px;
-  left: 4px;
+  top: 2px;
+  left: 6px;
   width: 4px;
   height: 8px;
   content: "";
@@ -3093,7 +3154,7 @@ button:disabled {
     gap: 12px;
   }
 
-  .vocabulary-set-page:not(.is-selection-mode) .vocabulary-select-checkbox {
+  .vocabulary-set-page .vocabulary-select-checkbox {
     display: none;
   }
 
@@ -3769,6 +3830,11 @@ button:disabled {
   }
 
   .vocabulary-set-header .vocabulary-actions > .icon-action img {
+    width: 26px;
+    height: 26px;
+  }
+
+  .vocabulary-set-header .vocabulary-actions > .vocabulary-action-button img {
     width: 26px;
     height: 26px;
   }

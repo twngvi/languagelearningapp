@@ -1,4 +1,4 @@
-const CACHE_NAME = 'personal-language-app-core-v27';
+const CACHE_NAME = 'personal-language-app-core-v37';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -31,6 +31,7 @@ const CORE_ASSETS = [
   './pages/settings-page.js',
   './pages/session-detail-page.js',
   './assets/icons/icon.svg',
+  './image/2.png',
 ];
 
 self.addEventListener('install', (event) => {

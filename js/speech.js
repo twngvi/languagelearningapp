@@ -57,7 +57,7 @@ export function speakText(text, { voiceName, rate, lang = 'en-US' } = {}) {
   const preferences = getSpeechPreferences();
   const selectedVoiceName = String(voiceName || '').trim() || preferences.voiceName;
   const selectedRate = rate === undefined ? preferences.rate : rate;
-  utterance.rate = Math.min(2, Math.max(0.5, Number(selectedRate) || defaultRate));
+  utterance.rate = Math.min(2, Math.max(0.25, Number(selectedRate) || defaultRate));
   const voices = getVoices();
   const voice = voices.find((item) => item.name === selectedVoiceName) || (!selectedVoiceName ? getPreferredVoice(voices, lang) : null);
   if (voice) utterance.voice = voice;

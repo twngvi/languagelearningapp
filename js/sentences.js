@@ -6,7 +6,7 @@ import {
   getAllRecords,
   updateRecord,
 } from './db.js';
-import { cancelSpeech, populateVoiceSelect, speakText, speakTextAndWait } from './speech.js';
+import { cancelSpeech, speakText, speakTextAndWait } from './speech.js';
 import { VoiceRecorder } from './recorder.js';
 import { showAlert, showConfirm } from './notifications.js';
 import { translateEnglishWord, translateVietnameseWord } from './vocabulary.js';
@@ -333,6 +333,7 @@ export async function initializeSpeakingPage() {
     editingId = record?.id || null;
     translationDirection = 'en-vi';
     lastAutoTranslation = '';
+    bulkForm.hidden = true;
     form.hidden = false;
     form.querySelector('[data-english-label]').textContent = 'Câu tiếng Anh *';
     form.querySelector('[data-vietnamese-label]').textContent = 'Bản dịch tiếng Việt *';
@@ -340,6 +341,10 @@ export async function initializeSpeakingPage() {
     [...form.elements].forEach((element) => {
       if (!element.name) return;
       if (element.type === 'checkbox') element.checked = Boolean(record?.[element.name]);
+      else if (element.name === 'rate') {
+        element.value = '1';
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+      }
       else element.value = record?.[element.name] || '';
     });
     form.querySelector('[name="english"]').focus();
@@ -356,6 +361,10 @@ export async function initializeSpeakingPage() {
     form.querySelector('[data-english-label]').textContent = 'Câu tiếng Anh *';
     form.querySelector('[data-vietnamese-label]').textContent = 'Bản dịch tiếng Việt *';
     form.querySelector('[data-sentence-form-title]').textContent = 'Thêm câu mới';
+  };
+
+  const scrollFormIntoView = (targetForm) => {
+    requestAnimationFrame(() => targetForm.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
   form.querySelector('[data-sentence-action="swap-language"]').addEventListener('click', () => {
@@ -553,9 +562,27 @@ export async function initializeSpeakingPage() {
         await updatePracticeStatus(false);
         return;
       }
-      if (action === 'new') showForm();
+      if (action === 'new') {
+        if (!form.hidden && bulkForm.hidden && !editingId) {
+          hideForm();
+          return;
+        }
+        showForm();
+        scrollFormIntoView(form);
+        return;
+      }
       if (action === 'cancel') hideForm();
-      if (action === 'bulk') bulkForm.hidden = false;
+      if (action === 'bulk') {
+        if (!bulkForm.hidden && form.hidden) {
+          bulkForm.reset();
+          bulkForm.hidden = true;
+          return;
+        }
+        form.hidden = true;
+        bulkForm.hidden = false;
+        scrollFormIntoView(bulkForm);
+        return;
+      }
       if (action === 'cancel-bulk') {
         bulkForm.reset();
         bulkForm.hidden = true;
@@ -633,7 +660,6 @@ export async function initializeSpeakingPage() {
     showMessage(`Đã thêm ${valid.length} câu vào kho luyện nói.`);
   });
 
-  populateVoiceSelect(form.elements.voice);
   document.addEventListener('app:stop-activities', () => {
     stopAutomaticAudio();
     recorder?.discard();
@@ -645,7 +671,7 @@ export async function initializeSpeakingPage() {
     const text = (translationDirection === 'en-vi'
       ? form.elements.english.value
       : form.elements.vietnamese.value).trim();
-    if (text) speakText(text, { lang: 'en-US', voiceName: form.elements.voice.value, rate: form.elements.rate.value });
+    if (text) speakText(text, { lang: 'en-US', rate: form.elements.rate.value });
   });
   await load();
 }

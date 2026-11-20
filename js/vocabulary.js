@@ -35,14 +35,6 @@ export async function initializeVocabularySetPage() {
   const setRecords = wordSet.vocabularyIds.map((id) => recordsById.get(id)).filter(Boolean);
   const setTitle = view.querySelector('[data-vocabulary-set-title]');
   setTitle.firstChild.textContent = `${wordSet.name} `;
-  const backToTopButton = view.querySelector('[data-vocabulary-set-back-to-top]');
-  const backToTopObserver = new IntersectionObserver(([entry]) => {
-    backToTopButton.hidden = entry.isIntersecting;
-  });
-  backToTopObserver.observe(view.querySelector('.vocabulary-set-header'));
-  backToTopButton.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
   const detailForm = view.querySelector('[data-set-detail-form]');
   const detailVocabularyForm = view.querySelector('[data-detail-vocabulary-form]');
   const detailBulkForm = view.querySelector('[data-detail-bulk-form]');

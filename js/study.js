@@ -181,7 +181,7 @@ export async function initializeStudyPage() {
         <p class="eyebrow">HOÀN THÀNH PHIÊN HỌC</p>
         <h2>Bạn đã hoàn thành ${cards.length} câu</h2>
         <p>${ratings.filter((rating) => ['good', 'easy', 'known'].includes(rating)).length} từ nhớ tốt · ${ratings.filter((rating) => ['forgotten', 'hard', 'again'].includes(rating)).length} từ cần ưu tiên ôn</p>
-        <button class="primary-button" data-study-action="restart" type="button">Học lại</button>
+        <button class="primary-button study-restart-button" data-study-action="restart" type="button">Học lại</button>
       </section>`;
   };
 

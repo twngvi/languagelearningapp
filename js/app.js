@@ -51,6 +51,34 @@ function initializeSidebar() {
 
 initializeSidebar();
 
+function initializeBackToTop() {
+  const view = document.querySelector('#app-view');
+  const button = document.querySelector('[data-app-back-to-top]');
+  let headerObserver;
+
+  const observePageHeader = () => {
+    headerObserver?.disconnect();
+    const header = view.querySelector('.page-header');
+    if (!header) {
+      button.hidden = true;
+      return;
+    }
+
+    headerObserver = new IntersectionObserver(([entry]) => {
+      button.hidden = entry.isIntersecting;
+    });
+    headerObserver.observe(header);
+  };
+
+  new MutationObserver(observePageHeader).observe(view, { childList: true });
+  button.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  observePageHeader();
+}
+
+initializeBackToTop();
+
 function stopActiveActivities() {
   window.speechSynthesis?.cancel();
   document.dispatchEvent(new CustomEvent('app:stop-activities'));

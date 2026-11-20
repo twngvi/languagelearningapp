@@ -1,4 +1,4 @@
-const CACHE_NAME = 'personal-language-app-core-v41';
+const CACHE_NAME = 'personal-language-app-core-v54';
 const IS_LOCAL_DEVELOPMENT = ['localhost', '127.0.0.1'].includes(self.location.hostname);
 const CORE_ASSETS = [
   './',
@@ -33,6 +33,9 @@ const CORE_ASSETS = [
   './pages/session-detail-page.js',
   './assets/icons/icon.svg',
   './assets/icons/favicon.png?v=2',
+  './image/1.png',
+  './image/nút nhap hang loat.png',
+  './image/nút them từ.png',
   './image/2.png',
 ];
 
@@ -72,8 +75,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (IS_LOCAL_DEVELOPMENT) {
+    const request = event.request.method === 'GET'
+      ? new Request(event.request, { cache: 'no-store' })
+      : event.request;
     event.respondWith(
-      fetch(event.request)
+      fetch(request)
         .then((response) => {
           if (response.ok) {
             const copy = response.clone();

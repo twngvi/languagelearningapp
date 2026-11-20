@@ -25,6 +25,9 @@ function enhanceSelect(select) {
   button.type = 'button';
   button.setAttribute('aria-haspopup', 'listbox');
   button.setAttribute('aria-expanded', 'false');
+  if (select.hasAttribute('aria-label')) {
+    button.setAttribute('aria-label', select.getAttribute('aria-label'));
+  }
   const menu = document.createElement('div');
   menu.className = 'custom-select-menu';
   menu.hidden = true;

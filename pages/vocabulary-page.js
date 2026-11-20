@@ -106,9 +106,6 @@ export function renderVocabularySet(setId) {
       </div>
       <div class="vocabulary-list" data-vocabulary-set-list data-set-id="${escapeHtml(setId)}"><p class="empty-state">Đang tải dữ liệu...</p></div>
     </section>
-    <button class="vocabulary-back-to-top" data-vocabulary-set-back-to-top type="button" aria-label="Quay lại đầu danh sách từ vựng" title="Quay lại đầu danh sách từ vựng" hidden>
-      <img src="image/1.png" alt="">
-    </button>
   `;
 }
 

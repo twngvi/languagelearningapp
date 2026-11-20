@@ -1,4 +1,4 @@
-const CACHE_NAME = 'personal-language-app-core-v40';
+const CACHE_NAME = 'personal-language-app-core-v41';
 const IS_LOCAL_DEVELOPMENT = ['localhost', '127.0.0.1'].includes(self.location.hostname);
 const CORE_ASSETS = [
   './',
@@ -32,6 +32,7 @@ const CORE_ASSETS = [
   './pages/settings-page.js',
   './pages/session-detail-page.js',
   './assets/icons/icon.svg',
+  './assets/icons/favicon.png?v=2',
   './image/2.png',
 ];
 

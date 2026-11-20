@@ -105,11 +105,9 @@ function sentenceRow(record) {
   return `
     <article class="sentence-row" data-sentence-id="${escapeHtml(record.id)}">
       <div class="sentence-main">
-        <button class="favorite-button ${record.favorite ? 'is-favorite' : ''}" data-sentence-action="favorite" type="button" aria-label="${record.favorite ? 'Bỏ yêu thích' : 'Thêm yêu thích'}">${record.favorite ? '★' : '☆'}</button>
         <div><h3>${escapeHtml(record.english)}</h3><p>${escapeHtml(record.vietnamese)}</p>${record.notes ? `<small>${escapeHtml(record.notes)}</small>` : ''}</div>
       </div>
-      <div class="sentence-meta"><span class="word-status">${escapeHtml(record.topic || 'Chưa phân loại')}</span>${record.practiceCount ? `<span class="word-status memorized">Đã luyện ${record.practiceCount} lần</span>` : '<span class="word-status">Chưa luyện</span>'}</div>
-      <div class="row-actions"><button class="secondary-button speech-image-button" data-sentence-action="speak" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><button class="icon-action edit-image-button" data-sentence-action="edit" type="button" aria-label="Sửa câu"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-sentence-action="delete" type="button" aria-label="Xóa câu"><img src="image/nút xóa.png" alt=""></button></div>
+      <div class="sentence-row-meta-actions"><div class="sentence-meta"><span class="word-status">${escapeHtml(record.topic || 'Chưa phân loại')}</span>${record.practiceCount ? `<span class="word-status memorized">Đã luyện ${record.practiceCount} lần</span>` : '<span class="word-status">Chưa luyện</span>'}<button class="favorite-button ${record.favorite ? 'is-favorite' : ''}" data-sentence-action="favorite" type="button" aria-label="${record.favorite ? 'Bỏ yêu thích' : 'Thêm yêu thích'}">${record.favorite ? '★' : '☆'}</button></div><div class="row-actions"><button class="secondary-button speech-image-button" data-sentence-action="speak" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><button class="icon-action edit-image-button" data-sentence-action="edit" type="button" aria-label="Sửa câu"><img src="image/Shinam.png" alt=""></button><button class="icon-action delete-image-button" data-sentence-action="delete" type="button" aria-label="Xóa câu"><img src="image/nút xóa.png" alt=""></button></div></div>
     </article>`;
 }
 
@@ -596,6 +594,7 @@ export async function initializeSpeakingPage() {
       if (action === 'delete' && record && await showConfirm(`Xóa câu "${record.english}"? Câu này sẽ bị xóa khỏi danh sách luyện nói.`, {
         title: 'Xóa câu giao tiếp?',
         confirmLabel: 'Xóa câu',
+        destructive: true,
       })) {
         await removeSentence(record.id);
         await load();

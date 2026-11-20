@@ -1,5 +1,6 @@
 const defaultRate = 1;
 const SPEECH_PREFERENCES_KEY = 'shin-speech-preferences';
+let speechRequestId = 0;
 
 export function getSpeechPreferences() {
   try {
@@ -51,6 +52,7 @@ export function speakText(text, { voiceName, rate, lang = 'en-US' } = {}) {
   }
   const content = String(text || '').trim();
   if (!content) throw new TypeError('Không có nội dung để phát âm.');
+  const requestId = ++speechRequestId;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(content);
   utterance.lang = lang;
@@ -61,11 +63,14 @@ export function speakText(text, { voiceName, rate, lang = 'en-US' } = {}) {
   const voices = getVoices();
   const voice = voices.find((item) => item.name === selectedVoiceName) || (!selectedVoiceName ? getPreferredVoice(voices, lang) : null);
   if (voice) utterance.voice = voice;
-  window.speechSynthesis.speak(utterance);
+  window.setTimeout(() => {
+    if (requestId === speechRequestId) window.speechSynthesis.speak(utterance);
+  }, 0);
   return utterance;
 }
 
 export function cancelSpeech() {
+  speechRequestId += 1;
   if (isSpeechSupported()) window.speechSynthesis.cancel();
 }
 

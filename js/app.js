@@ -18,6 +18,7 @@ import { getLearningStatistics } from './statistics.js';
 import { countSavedVocabularyInSet, listWordSets } from './word-sets.js';
 import { initializeBackupPage } from './backup-page.js';
 import { enhanceCustomSelects } from './custom-select.js';
+import { cancelSpeech } from './speech.js';
 
 const routes = {
   home: { render: renderHome },
@@ -80,7 +81,7 @@ function initializeBackToTop() {
 initializeBackToTop();
 
 function stopActiveActivities() {
-  window.speechSynthesis?.cancel();
+  cancelSpeech();
   document.dispatchEvent(new CustomEvent('app:stop-activities'));
 }
 

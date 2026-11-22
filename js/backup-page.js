@@ -1,6 +1,6 @@
 import { backupSummary, exportJson, exportVocabularyCsv, importBackup, readBackupFile } from './backup.js';
-import { getDatabaseHealth } from './db.js';
-import { getSpeechPreferences, getVoices, saveSpeechPreferences, toggleSpeech, populateVoiceSelect } from './speech.js';
+import { getAllRecords, getDatabaseHealth, STORES, updateRecord } from './db.js';
+import { getSpeechPreferences, getVoices, saveSpeechPreferences, speakText, toggleSpeech, populateVoiceSelect } from './speech.js';
 import { showConfirm } from './notifications.js';
 
 export function initializeBackupPage() {
@@ -39,6 +39,7 @@ export function initializeBackupPage() {
   };
 
   const showSyncMessage = (text, type = 'success') => {
+    if (!syncMessage) return;
     syncMessage.textContent = text;
     syncMessage.className = `notice ${type}`;
   };
@@ -57,6 +58,15 @@ export function initializeBackupPage() {
   });
   speechVoice.addEventListener('change', () => {
     saveSpeechPreferences({ voiceName: speechVoice.value, rate: speechRate.value });
+    try {
+      speakText('Hello, this is your selected voice.', {
+        voiceName: speechVoice.value,
+        rate: speechRate.value,
+        lang: 'en-US',
+      });
+    } catch (error) {
+      showSyncMessage(error.message, 'error');
+    }
   });
   const speechPreviewButton = view.querySelector('[data-speech-action="preview"]');
   speechPreviewButton.addEventListener('click', () => {
@@ -72,8 +82,10 @@ export function initializeBackupPage() {
   });
   if ('speechSynthesis' in window) {
     window.speechSynthesis.addEventListener('voiceschanged', () => {
+      const savedVoice = getSpeechPreferences().voiceName;
       populateVoiceSelect(speechVoice);
-      speechVoice.value = getSpeechPreferences().voiceName;
+      const hasSavedVoice = [...speechVoice.options].some((option) => option.value === savedVoice);
+      speechVoice.value = hasSavedVoice ? savedVoice : '';
     });
   }
 
@@ -128,16 +140,21 @@ export function initializeBackupPage() {
   getDatabaseHealth()
     .then(({ version, counts }) => {
       const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-      databaseStatus.textContent = `Database nội bộ đang hoạt động · phiên bản ${version} · ${total} bản ghi trên thiết bị này.`;
-      databaseStatus.className = 'notice success';
+      if (databaseStatus) {
+        databaseStatus.textContent = `Database nội bộ đang hoạt động · phiên bản ${version} · ${total} bản ghi trên thiết bị này.`;
+        databaseStatus.className = 'notice success';
+      }
     })
     .catch((error) => {
       console.error('Không thể kiểm tra database nội bộ:', error);
-      databaseStatus.textContent = `Không thể kiểm tra database nội bộ: ${error.message}`;
-      databaseStatus.className = 'notice error';
+      if (databaseStatus) {
+        databaseStatus.textContent = `Không thể kiểm tra database nội bộ: ${error.message}`;
+        databaseStatus.className = 'notice error';
+      }
     });
 
   const showMessage = (text, type = 'success') => {
+    if (!message) return;
     message.textContent = text;
     message.className = `notice ${type}`;
   };
@@ -161,6 +178,25 @@ export function initializeBackupPage() {
   view.addEventListener('click', async (event) => {
     const action = event.target.closest('[data-backup-action]')?.dataset.backupAction;
     try {
+      if (action === 'clear-notes') {
+        if (!await showConfirm('Thao tác này sẽ xóa ghi chú của tất cả từ và câu. Từ/câu và dữ liệu khác sẽ được giữ nguyên. Tiếp tục?', {
+          title: 'Xóa tất cả ghi chú?',
+          confirmLabel: 'Xóa ghi chú',
+        })) return;
+
+        let updated = 0;
+        for (const storeName of [STORES.vocabulary, STORES.sentences]) {
+          const records = await getAllRecords(storeName);
+          for (const record of records) {
+            if (record.notes === undefined || record.notes === '') continue;
+            await updateRecord(storeName, { ...record, notes: '' });
+            updated += 1;
+          }
+        }
+        showMessage(updated
+          ? `Đã xóa ghi chú khỏi ${updated} bản ghi.`
+          : 'Không có ghi chú nào để xóa.');
+      }
       if (action === 'export-json') {
         const stores = [...view.querySelectorAll('[data-backup-scope]:checked')].map((input) => input.value);
         if (!stores.length) throw new Error('Hãy chọn ít nhất một kho dữ liệu để xuất.');

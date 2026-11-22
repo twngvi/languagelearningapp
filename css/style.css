@@ -691,6 +691,20 @@ h2 {
   justify-content: center;
 }
 
+.daily-goal-controls .save-button {
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  min-height: 52px;
+  padding: 8px;
+  flex: 0 0 52px;
+}
+
+.daily-goal-controls .save-button img {
+  width: 32px;
+  height: 32px;
+}
+
 .save-button img,
 .save-recording-button img {
   display: block;
@@ -1188,6 +1202,10 @@ h2 {
   margin-left: 6px;
   color: var(--primary-dark);
   font-weight: 700;
+}
+
+.speech-rate-row {
+  display: contents;
 }
 
 .backup-actions {
@@ -5227,5 +5245,57 @@ button {
     min-width: 0;
     max-width: 100%;
     flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .daily-goal-form {
+    max-width: none;
+  }
+
+  .daily-goal-controls {
+    width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .daily-goal-controls input {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .daily-goal-controls .save-button {
+    width: 52px;
+    min-width: 52px;
+    max-width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+  }
+
+  .speech-preferences {
+    grid-template-columns: 1fr;
+  }
+
+  .speech-rate-row {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .speech-rate-row > label {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .speech-preview-button {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 42px;
+    flex: 0 0 auto;
   }
 }

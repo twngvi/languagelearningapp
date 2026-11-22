@@ -205,19 +205,19 @@ async function initializeDailyGoalSetting() {
     input.value = await getDailyWordGoal();
   } catch (error) {
     console.error('Không thể tải mục tiêu học tập:', error);
-    message.textContent = `Không thể tải mục tiêu: ${error.message}`;
+    if (message) message.textContent = `Không thể tải mục tiêu: ${error.message}`;
     return;
   }
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    message.textContent = '';
+    if (message) message.textContent = '';
     try {
       await saveDailyWordGoal(input.value);
-      message.textContent = 'Đã lưu mục tiêu học tập.';
+      if (message) message.textContent = 'Đã lưu mục tiêu học tập.';
     } catch (error) {
       console.error('Không thể lưu mục tiêu học tập:', error);
-      message.textContent = `Không thể lưu mục tiêu: ${error.message}`;
+      if (message) message.textContent = `Không thể lưu mục tiêu: ${error.message}`;
     }
   });
 }

@@ -47,6 +47,25 @@ function getPreferredVoice(voices, lang) {
   return [...englishVoices].sort((first, second) => getVoiceScore(second) - getVoiceScore(first))[0];
 }
 
+function findSelectedVoice(voices, voiceName, lang) {
+  const normalizedName = String(voiceName || '').trim().toLowerCase();
+  if (!normalizedName) return getPreferredVoice(voices, lang);
+
+  const exact = voices.find((voice) => voice.name === voiceName);
+  if (exact) return exact;
+
+  const normalized = voices.find((voice) => voice.name.toLowerCase() === normalizedName);
+  if (normalized) return normalized;
+
+  const partial = voices.find((voice) => (
+    voice.name.toLowerCase().includes(normalizedName)
+    || normalizedName.includes(voice.name.toLowerCase())
+  ) && voice.lang.toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()));
+  if (partial) return partial;
+
+  return getPreferredVoice(voices, lang);
+}
+
 function setButtonPressed(button, pressed) {
   if (button) button.setAttribute('aria-pressed', String(pressed));
 }
@@ -67,22 +86,21 @@ function startSpeech(text, { voiceName, rate, lang = 'en-US' } = {}, button = nu
   const requestId = speechRequestId;
   const utterance = new SpeechSynthesisUtterance(content);
   utterance.lang = lang;
+  utterance.volume = 1;
+  utterance.pitch = 1;
   const preferences = getSpeechPreferences();
   const selectedVoiceName = String(voiceName || '').trim() || preferences.voiceName;
   const selectedRate = rate === undefined ? preferences.rate : rate;
   utterance.rate = Math.min(2, Math.max(0.25, Number(selectedRate) || defaultRate));
   const voices = getVoices();
-  const voice = voices.find((item) => item.name === selectedVoiceName) || (!selectedVoiceName ? getPreferredVoice(voices, lang) : null);
+  const voice = findSelectedVoice(voices, selectedVoiceName, lang);
   if (voice) utterance.voice = voice;
-  activeSpeech = { button, requestId };
+  activeSpeech = { button, requestId, utterance };
   setButtonPressed(button, true);
   utterance.addEventListener('end', () => clearActiveSpeech(requestId), { once: true });
   utterance.addEventListener('error', () => clearActiveSpeech(requestId), { once: true });
-  window.setTimeout(() => {
-    if (requestId === speechRequestId && activeSpeech?.requestId === requestId) {
-      window.speechSynthesis.speak(utterance);
-    }
-  }, 0);
+  if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+  window.speechSynthesis.speak(utterance);
   return utterance;
 }
 

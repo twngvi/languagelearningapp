@@ -1,4 +1,4 @@
-const CACHE_NAME = 'personal-language-app-core-v71';
+const CACHE_NAME = 'personal-language-app-core-v72';
 const IS_LOCAL_DEVELOPMENT = ['localhost', '127.0.0.1'].includes(self.location.hostname);
 const CORE_ASSETS = [
   './',

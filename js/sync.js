@@ -2,6 +2,7 @@ import { getCurrentUser, supabase } from './supabase.js';
 
 const SYNC_TABLE = 'app_records';
 let syncTimer;
+let fullSync;
 const pendingSyncs = new Map();
 
 function notify(status, detail = '') {
@@ -18,6 +19,7 @@ export async function upsertRemoteRecord(storeName, record) {
     record_id: record.id,
     record,
     updated_at: record.updatedAt || new Date().toISOString(),
+    deleted_at: null,
   }, { onConflict: 'user_id,store_name,record_id' });
   if (error) throw error;
   return true;
@@ -28,7 +30,7 @@ export async function removeRemoteRecord(storeName, recordId) {
   if (!user || !navigator.onLine) return false;
 
   const { error } = await supabase.from(SYNC_TABLE)
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('user_id', user.id)
     .eq('store_name', storeName)
     .eq('record_id', recordId);
@@ -65,34 +67,71 @@ export function queueRecordSync(action, storeName, value) {
 }
 
 export async function syncAllLocalData() {
+  if (fullSync) return fullSync;
+  fullSync = performFullSync().finally(() => {
+    fullSync = undefined;
+  });
+  return fullSync;
+}
+
+function recordTime(value) {
+  const timestamp = Date.parse(value || '');
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+async function performFullSync() {
   const user = await getCurrentUser();
   if (!user) throw new Error('Hãy đăng nhập trước khi đồng bộ.');
   if (!navigator.onLine) throw new Error('Thiết bị đang ngoại tuyến.');
 
-  const { getAllRecords, STORES, updateRecord, addRecord } = await import('./db.js');
+  const { getAllRecords, STORES, saveSyncedRecord, deleteSyncedRecord } = await import('./db.js');
   const localByKey = new Map();
-  for (const storeName of Object.values(STORES)) {
+  const syncStores = Object.values(STORES).filter((storeName) => storeName !== STORES.recordings);
+  for (const storeName of syncStores) {
     for (const record of await getAllRecords(storeName)) {
       localByKey.set(`${storeName}:${record.id}`, { storeName, record });
     }
   }
 
-  const { data, error } = await supabase.from(SYNC_TABLE).select('store_name,record_id,record,updated_at');
+  const { data, error } = await supabase.from(SYNC_TABLE)
+    .select('store_name,record_id,record,updated_at,deleted_at');
   if (error) throw error;
 
+  const remoteByKey = new Map();
   for (const remote of data || []) {
     const key = `${remote.store_name}:${remote.record_id}`;
+    remoteByKey.set(key, remote);
     const local = localByKey.get(key);
-    const remoteRecord = remote.record;
-    if (!local) {
-      await addRecord(remote.store_name, remoteRecord);
+    if (remote.deleted_at) {
+      const localTime = recordTime(local?.record.updatedAt || local?.record.createdAt);
+      if (local && localTime > recordTime(remote.deleted_at)) {
+        await upsertRemoteRecord(local.storeName, local.record);
+      } else if (local) {
+        await deleteSyncedRecord(remote.store_name, remote.record_id);
+      }
       continue;
     }
-    const localTime = Date.parse(local.record.updatedAt || local.record.createdAt || 0);
-    const remoteTime = Date.parse(remote.updated_at || remoteRecord.updatedAt || 0);
-    if (remoteTime > localTime) await updateRecord(remote.store_name, remoteRecord);
+
+    const remoteRecord = {
+      ...remote.record,
+      updatedAt: remote.record.updatedAt || remote.updated_at,
+    };
+    if (!local) {
+      await saveSyncedRecord(remote.store_name, remoteRecord);
+      continue;
+    }
+
+    const localTime = recordTime(local.record.updatedAt || local.record.createdAt);
+    const remoteTime = recordTime(remote.updated_at || remoteRecord.updatedAt);
+    if (remoteTime > localTime) {
+      await saveSyncedRecord(remote.store_name, remoteRecord);
+    } else if (localTime > remoteTime) {
+      await upsertRemoteRecord(local.storeName, local.record);
+    }
   }
 
-  for (const { storeName, record } of localByKey.values()) await upsertRemoteRecord(storeName, record);
+  for (const [key, { storeName, record }] of localByKey) {
+    if (!remoteByKey.has(key)) await upsertRemoteRecord(storeName, record);
+  }
   notify('synced');
 }

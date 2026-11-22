@@ -4,8 +4,12 @@ create table if not exists public.app_records (
   record_id text not null,
   record jsonb not null,
   updated_at timestamptz not null default now(),
+  deleted_at timestamptz,
   primary key (user_id, store_name, record_id)
 );
+
+alter table public.app_records
+  add column if not exists deleted_at timestamptz;
 
 alter table public.app_records enable row level security;
 

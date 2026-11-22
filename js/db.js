@@ -214,6 +214,38 @@ export async function updateRecord(storeName, record) {
   }
 }
 
+export async function saveSyncedRecord(storeName, record) {
+  validateStoreName(storeName);
+  if (!record?.id) {
+    throw new TypeError('A synced record with an id is required.');
+  }
+
+  try {
+    const database = await openDatabase();
+    const transaction = database.transaction(storeName, 'readwrite');
+    const request = transaction.objectStore(storeName).put(record);
+    await transactionResult(transaction, request);
+  } catch (error) {
+    throw databaseError(error, 'sync', storeName);
+  }
+}
+
+export async function deleteSyncedRecord(storeName, id) {
+  validateStoreName(storeName);
+  if (!id) {
+    throw new TypeError('A synced record id is required.');
+  }
+
+  try {
+    const database = await openDatabase();
+    const transaction = database.transaction(storeName, 'readwrite');
+    const request = transaction.objectStore(storeName).delete(id);
+    await transactionResult(transaction, request);
+  } catch (error) {
+    throw databaseError(error, 'sync delete', storeName);
+  }
+}
+
 export async function deleteRecord(storeName, id) {
   validateStoreName(storeName);
   if (!id) {

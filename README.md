@@ -27,9 +27,9 @@ Shin là ứng dụng học tiếng Anh cá nhân, giao diện tiếng Việt, c
 
 Nếu muốn dùng chung dữ liệu trên máy tính và điện thoại:
 
-1. Vào **Cài đặt**.
-2. Đăng nhập bằng cùng một email trên cả hai thiết bị.
-3. Bấm **Đồng bộ ngay** khi cần cập nhật dữ liệu.
+1. Trong Supabase, cho phép `https://twngvi.github.io/languagelearningapp/#settings` ở **Authentication → URL Configuration → Redirect URLs**, rồi chạy tệp [`supabase-schema.sql`](./supabase-schema.sql) trong SQL Editor. Nếu bảng `app_records` đã được tạo trước đây, chạy lại phần thêm cột `deleted_at` trong tệp này.
+2. Vào **Cài đặt**, nhập cùng một email trên mỗi thiết bị và mở link đăng nhập trên chính trình duyệt đang dùng ứng dụng.
+3. Dữ liệu sẽ tự đồng bộ khi đăng nhập, khi mở lại ứng dụng hoặc khi ứng dụng được đưa về trước. Có thể bấm **Đồng bộ ngay** để cập nhật tức thì.
 
 Bạn cũng có thể dùng **Xuất toàn bộ JSON** để sao lưu hoặc chuyển dữ liệu thủ công.
 

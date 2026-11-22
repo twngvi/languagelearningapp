@@ -268,7 +268,47 @@ async function initializeHomePage() {
   }
 }
 
-router.start();
+async function initializeAuthCallback() {
+  const hasAuthCallback = window.location.hash.includes('access_token=')
+    || new URLSearchParams(window.location.search).has('code');
+  if (!hasAuthCallback) return;
+
+  const { supabase } = await import('./supabase.js');
+  const { error } = await supabase.auth.getSession();
+  if (error) throw error;
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#settings`);
+}
+
+initializeAuthCallback()
+  .catch((error) => {
+    console.error('Không thể hoàn tất đăng nhập Supabase:', error);
+  })
+  .finally(() => {
+    router.start();
+    syncOnResume();
+  });
+
+let resumeSync;
+async function syncOnResume() {
+  if (!navigator.onLine || document.visibilityState === 'hidden' || resumeSync) return;
+  resumeSync = (async () => {
+    const { getCurrentUser } = await import('./supabase.js');
+    if (!await getCurrentUser()) return;
+    const { syncAllLocalData } = await import('./sync.js');
+    await syncAllLocalData();
+  })();
+  try {
+    await resumeSync;
+  } catch (error) {
+    console.error('Không thể tự động đồng bộ dữ liệu:', error);
+  } finally {
+    resumeSync = undefined;
+  }
+}
+
+window.addEventListener('focus', syncOnResume);
+window.addEventListener('online', syncOnResume);
+document.addEventListener('visibilitychange', syncOnResume);
 
 openDatabase()
   .then(async () => {

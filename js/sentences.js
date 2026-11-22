@@ -6,7 +6,7 @@ import {
   getAllRecords,
   updateRecord,
 } from './db.js';
-import { cancelSpeech, speakText, speakTextAndWait } from './speech.js';
+import { cancelSpeech, isSpeechActive, speakText, speakTextAndWait, toggleSpeech } from './speech.js';
 import { VoiceRecorder } from './recorder.js';
 import { showAlert, showConfirm } from './notifications.js';
 import { translateEnglishWord, translateVietnameseWord } from './vocabulary.js';
@@ -209,14 +209,14 @@ export async function initializeSpeakingPage() {
         ${card.notes ? `<small>${escapeHtml(card.notes)}</small>` : ''}
         <p class="practice-mode-label">${practice.mode === 'shadowing' ? 'Shadowing: nói gần như ngay sau giọng mẫu.' : practice.mode === 'recall' ? 'Recall: nói câu tiếng Anh từ bản dịch, rồi kiểm tra đáp án.' : 'Listen and Repeat: nghe mẫu rồi nói theo.'}</p>
         <div class="speaking-controls"><button class="secondary-button speech-image-button" data-sentence-action="listen" type="button" aria-label="Nghe mẫu"><img src="image/logo trên sidebar2.png" alt=""></button><button class="secondary-button speech-image-button" data-sentence-action="slow-listen" type="button" aria-label="Phát chậm"><img src="image/logo trên sidebar2.png" alt=""></button><button class="secondary-button" data-sentence-action="toggle-english" type="button">${practice.hiddenEnglish ? 'Hiện câu tiếng Anh' : 'Ẩn câu tiếng Anh'}</button>${practice.mode === 'recall' && practice.hiddenEnglish ? '<button class="primary-button" data-sentence-action="reveal-recall" type="button">Hiện câu mẫu</button>' : ''}</div>
-        <div class="recording-panel"><div class="recording-status" data-recording-status>${recorder?.state === 'recording' ? 'Đang ghi âm...' : recorder?.blob ? 'Đã có bản ghi tạm' : 'Chưa ghi âm'}</div><div class="speaking-controls"><button class="primary-button" data-sentence-action="record" type="button">${recorder?.state === 'recording' ? 'Dừng ghi' : '● Ghi âm'}</button>${recorder?.url ? `<audio controls src="${recorder.url}" aria-label="Bản ghi của bạn"></audio><button class="secondary-button" data-sentence-action="save-recording" type="button">Lưu bản ghi</button><button class="icon-action delete-image-button" data-sentence-action="discard-recording" type="button" aria-label="Xóa bản ghi"><img src="image/nút xóa.png" alt=""></button>` : ''}</div></div>
+        <div class="recording-panel"><div class="recording-status" data-recording-status>${recorder?.state === 'recording' ? 'Đang ghi âm...' : recorder?.blob ? 'Đã có bản ghi tạm' : 'Chưa ghi âm'}</div><div class="speaking-controls"><button class="primary-button record-microphone-button" data-sentence-action="record" type="button" aria-label="${recorder?.state === 'recording' ? 'Dừng ghi âm' : 'Ghi âm'}" title="${recorder?.state === 'recording' ? 'Dừng ghi âm' : 'Ghi âm'}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path></svg></button>${recorder?.url ? `<audio preload="metadata" src="${recorder.url}" aria-label="Bản ghi của bạn"></audio><button class="icon-action play-recording-button" data-sentence-action="play-recording" type="button" aria-label="Phát bản ghi" title="Phát bản ghi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"></path></svg></button><button class="icon-action save-recording-button" data-sentence-action="save-recording" type="button" aria-label="Lưu bản ghi" title="Lưu bản ghi"><img src="image/lưu.png" alt=""></button><button class="icon-action delete-image-button" data-sentence-action="discard-recording" type="button" aria-label="Xóa bản ghi"><img src="image/nút xóa.png" alt=""></button>` : ''}</div></div>
       </article>
       <div class="practice-navigation"><button class="secondary-button" data-sentence-action="previous-speaking" type="button" ${practice.index === 0 ? 'disabled' : ''}>← Câu trước</button><button class="secondary-button" data-sentence-action="next-speaking" type="button" ${practice.index === practice.cards.length - 1 ? 'disabled' : ''}>Câu tiếp theo →</button></div>
       <div class="audio-automation">
-        <div class="section-heading"><div><h3>Âm thanh tự động</h3><p class="form-help">Tự phát, lặp câu và chờ bạn nói theo.</p></div><button class="secondary-button" data-sentence-action="${auto.running ? 'stop-auto' : 'start-auto'}" type="button">${auto.running ? 'Dừng tự động' : 'Chạy tự động'}</button></div>
-        <div class="automation-options"><label><input data-auto-enabled type="checkbox" ${auto.enabled ? 'checked' : ''}> Bật tự phát khi mở câu</label><label>Số lần lặp<select data-auto-repeat><option value="1" ${auto.repeat === 1 ? 'selected' : ''}>1</option><option value="2" ${auto.repeat === 2 ? 'selected' : ''}>2</option><option value="3" ${auto.repeat === 3 ? 'selected' : ''}>3</option></select></label><label>Nghỉ giữa lần (giây)<input data-auto-rest type="number" min="0" max="30" step="0.5" value="${auto.rest}"></label><label>Chờ nói (giây)<input data-auto-wait type="number" min="0" max="60" step="0.5" value="${auto.wait}"></label><label><input data-auto-advance type="checkbox" ${auto.advance ? 'checked' : ''}> Tự chuyển câu</label></div>
-      </div>
-      <div class="practice-status"><button class="secondary-button" data-sentence-action="mark-repeat" type="button">Cần luyện lại</button><button class="primary-button" data-sentence-action="mark-complete" type="button">Đã hoàn thành</button></div>`;
+        <div class="section-heading"><div><h3>Âm thanh tự động</h3><p class="form-help">Tự phát, lặp câu và chờ bạn nói theo.</p></div><button class="secondary-button automation-repeat-mobile" data-sentence-action="mark-repeat" type="button">Cần luyện lại</button><button class="secondary-button" data-sentence-action="${auto.running ? 'stop-auto' : 'start-auto'}" type="button">${auto.running ? 'Dừng tự động' : 'Chạy tự động'}</button></div>
+        <div class="automation-options"><label><input data-auto-enabled type="checkbox" ${auto.enabled ? 'checked' : ''}> Tự bật phát khi mở câu</label><label>Số lần lặp<select data-auto-repeat><option value="1" ${auto.repeat === 1 ? 'selected' : ''}>1</option><option value="2" ${auto.repeat === 2 ? 'selected' : ''}>2</option><option value="3" ${auto.repeat === 3 ? 'selected' : ''}>3</option></select></label><label>Nghỉ giữa lần (giây)<input data-auto-rest type="number" min="0" max="30" step="0.5" value="${auto.rest}"></label><label>Chờ nói (giây)<input data-auto-wait type="number" min="0" max="60" step="0.5" value="${auto.wait}"></label><label><input data-auto-advance type="checkbox" ${auto.advance ? 'checked' : ''}> Tự chuyển câu</label></div>
+        <div class="practice-status"><button class="secondary-button" data-sentence-action="mark-repeat" type="button">Cần luyện lại</button><button class="primary-button" data-sentence-action="mark-complete" type="button">Đã hoàn thành</button></div>
+      </div>`;
   };
 
   const delay = (seconds, token) => new Promise((resolve) => {
@@ -291,7 +291,9 @@ export async function initializeSpeakingPage() {
     stopAutomaticAudio();
     recorder?.discard();
     recorder = new VoiceRecorder({
-      onStateChange: () => renderPractice(),
+      onStateChange: () => {
+        if (practice && view.querySelector('[data-speaking-practice]')) renderPractice();
+      },
       onError: (error) => showMessage(error.message, 'error'),
     });
     view.querySelector('[data-speaking-library]').hidden = true;
@@ -474,12 +476,14 @@ export async function initializeSpeakingPage() {
         return;
       }
       if (action === 'listen' && practice) {
-        stopAutomaticAudio();
-        speakText(practice.cards[practice.index].english, { lang: 'en-US', rate: 1 });
+        const text = practice.cards[practice.index].english;
+        if (!isSpeechActive(actionElement)) stopAutomaticAudio();
+        toggleSpeech(actionElement, text, { lang: 'en-US', rate: 1 });
       }
       if (action === 'slow-listen' && practice) {
-        stopAutomaticAudio();
-        speakText(practice.cards[practice.index].english, { lang: 'en-US', rate: 0.65 });
+        const text = practice.cards[practice.index].english;
+        if (!isSpeechActive(actionElement)) stopAutomaticAudio();
+        toggleSpeech(actionElement, text, { lang: 'en-US', rate: 0.65 });
       }
       if (action === 'reveal-recall' && practice?.mode === 'recall') {
         practice.hiddenEnglish = false;
@@ -521,6 +525,27 @@ export async function initializeSpeakingPage() {
           recordedAt: new Date().toISOString(),
         });
         showMessage('Đã lưu bản ghi của câu này.');
+        return;
+      }
+      if (action === 'play-recording' && recorder?.url) {
+        if (!recorder.blob?.size) {
+          showMessage('Bản ghi chưa sẵn sàng. Hãy dừng ghi và thử lại.', 'error');
+          return;
+        }
+        const audio = view.querySelector('.recording-panel audio');
+        if (!audio) return;
+        if (!audio.paused) {
+          audio.pause();
+          audio.currentTime = 0;
+        } else {
+          try {
+            audio.src = recorder.url;
+            audio.load();
+            await audio.play();
+          } catch (error) {
+            showMessage(`Không thể phát bản ghi: ${error.message}`, 'error');
+          }
+        }
         return;
       }
       if (action === 'discard-recording' && recorder) {
@@ -585,7 +610,7 @@ export async function initializeSpeakingPage() {
         bulkForm.reset();
         bulkForm.hidden = true;
       }
-      if (action === 'speak' && record) speakText(record.english, { lang: 'en-US' });
+      if (action === 'speak' && record) toggleSpeech(actionElement, record.english, { lang: 'en-US' });
       if (action === 'favorite' && record) {
         await editSentence({ ...record, favorite: !record.favorite });
         await load();
@@ -670,7 +695,7 @@ export async function initializeSpeakingPage() {
     const text = (translationDirection === 'en-vi'
       ? form.elements.english.value
       : form.elements.vietnamese.value).trim();
-    if (text) speakText(text, { lang: 'en-US', rate: form.elements.rate.value });
+    if (text) toggleSpeech(actionElement, text, { lang: 'en-US', rate: form.elements.rate.value });
   });
   await load();
 }

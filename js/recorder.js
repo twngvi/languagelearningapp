@@ -6,8 +6,24 @@ export function isRecorderSupported() {
 }
 
 function chooseMimeType() {
-  return ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']
-    .find((type) => MediaRecorder.isTypeSupported?.(type)) || '';
+  const audioProbe = document.createElement('audio');
+  const prefersMp4 = /iPad|iPhone|iPod|Safari/i.test(navigator.userAgent)
+    && !/Chrome|Chromium|Android/i.test(navigator.userAgent);
+  if (prefersMp4) {
+    if (MediaRecorder.isTypeSupported?.('audio/mp4') && audioProbe.canPlayType('audio/mp4')) {
+      return 'audio/mp4';
+    }
+  }
+  const candidates = [
+    ['audio/webm;codecs=opus', 'audio/webm'],
+    ['audio/webm', 'audio/webm'],
+    ['audio/ogg;codecs=opus', 'audio/ogg'],
+    ['audio/mp4', 'audio/mp4'],
+  ];
+  return candidates.find(([recordingType, playbackType]) =>
+    MediaRecorder.isTypeSupported?.(recordingType)
+    && (!globalThis.Audio || document.createElement('audio').canPlayType(playbackType))
+  )?.[0] || '';
 }
 
 export class VoiceRecorder {
@@ -52,7 +68,12 @@ export class VoiceRecorder {
           this.onStateChange('inactive');
           return;
         }
-        const type = this.mediaRecorder.mimeType || 'audio/webm';
+        const recordedType = this.mediaRecorder.mimeType || 'audio/webm';
+        const type = recordedType.includes('mp4')
+          ? 'audio/mp4'
+          : recordedType.includes('ogg')
+            ? 'audio/ogg'
+            : 'audio/webm';
         this.blob = new Blob(this.chunks, { type });
         this.url = URL.createObjectURL(this.blob);
         this.releaseStream();
@@ -71,6 +92,11 @@ export class VoiceRecorder {
 
   stop() {
     if (this.state !== 'recording') return;
+    try {
+      this.mediaRecorder.requestData();
+    } catch {
+      // Ignore browsers that do not expose requestData().
+    }
     this.mediaRecorder.stop();
     this.onStateChange('processing');
   }

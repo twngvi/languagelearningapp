@@ -1,7 +1,7 @@
 import { STORES, addRecord, getAllRecords, getRecord, updateRecord } from './db.js';
 import { countSavedVocabularyInSet, listWordSets } from './word-sets.js';
 import { renderStudyCard, renderChooseQuestion, renderTypeQuestion, renderBlankQuestion } from '../pages/study-page.js';
-import { speakText } from './speech.js';
+import { toggleSpeech } from './speech.js';
 import { scheduleReview } from './review.js';
 import { showConfirm } from './notifications.js';
 
@@ -230,7 +230,7 @@ export async function initializeStudyPage() {
         actionElement.setAttribute('aria-label', flipped ? 'Lật về mặt gợi nhớ' : 'Lật để xem đáp án');
       }
       if (action === 'speak') {
-        speakText(cards[index].word);
+        toggleSpeech(actionElement, cards[index].word);
       }
       if (action === 'difficult') {
         difficult = !difficult;
@@ -257,7 +257,7 @@ export async function initializeStudyPage() {
         if (index === cards.length - 1) await finish();
         else transitionToCard(index + 1, 'next');
       }
-      if (action === 'speak-sentence') speakText(cards[index].example);
+      if (action === 'speak-sentence') toggleSpeech(actionElement, cards[index].example);
       if (actionElement.dataset.quizAnswer) {
         const selected = records.find((record) => record.id === actionElement.dataset.quizAnswer);
         const correct = selected?.id === cards[index].id;

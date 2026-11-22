@@ -1,6 +1,6 @@
 import { backupSummary, exportJson, exportVocabularyCsv, importBackup, readBackupFile } from './backup.js';
 import { getDatabaseHealth } from './db.js';
-import { getSpeechPreferences, getVoices, saveSpeechPreferences, speakText, populateVoiceSelect } from './speech.js';
+import { getSpeechPreferences, getVoices, saveSpeechPreferences, toggleSpeech, populateVoiceSelect } from './speech.js';
 import { showConfirm } from './notifications.js';
 
 export function initializeBackupPage() {
@@ -47,9 +47,10 @@ export function initializeBackupPage() {
   speechVoice.addEventListener('change', () => {
     saveSpeechPreferences({ voiceName: speechVoice.value, rate: speechRate.value });
   });
-  view.querySelector('[data-speech-action="preview"]').addEventListener('click', () => {
+  const speechPreviewButton = view.querySelector('[data-speech-action="preview"]');
+  speechPreviewButton.addEventListener('click', () => {
     try {
-      speakText('Hello, this is your selected voice.', {
+      toggleSpeech(speechPreviewButton, 'Hello, this is your selected voice.', {
         voiceName: speechVoice.value,
         rate: speechRate.value,
         lang: 'en-US',

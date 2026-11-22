@@ -66,7 +66,7 @@ function showDialog({
         </div>
         <div class="app-dialog-actions${destructive || compactActions ? ' is-compact' : ''}">
           ${cancelLabel ? `<button class="secondary-button app-dialog-cancel" type="button">${cancelLabel}</button>` : ''}
-          <button class="primary-button app-dialog-confirm" type="button">${destructive || confirmIconImage ? `<img class="app-dialog-confirm-icon" src="${confirmIconImage || 'image/nút xóa.png'}" alt="">` : ''}${confirmLabel}</button>
+          <button class="primary-button app-dialog-confirm${confirmLabel.toLowerCase().includes('lưu') ? ' save-button' : ''}" type="button"${confirmLabel.toLowerCase().includes('lưu') ? ` aria-label="${escapeDialogText(confirmLabel)}" title="${escapeDialogText(confirmLabel)}"` : ''}>${destructive ? `<img class="app-dialog-confirm-icon" src="${confirmIconImage || 'image/nút xóa.png'}" alt=""><span>${escapeDialogText(confirmLabel)}</span>` : confirmLabel.toLowerCase().includes('lưu') ? '<img class="app-dialog-confirm-icon" src="image/lưu.png" alt="">' : escapeDialogText(confirmLabel)}</button>
         </div>
       </section>`;
 

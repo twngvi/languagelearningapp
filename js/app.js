@@ -55,7 +55,38 @@ initializeSidebar();
 function initializeBackToTop() {
   const view = document.querySelector('#app-view');
   const button = document.querySelector('[data-app-back-to-top]');
+  const positionStorageKey = 'shin-back-to-top-horizontal-position';
+  const savedPosition = localStorage.getItem(positionStorageKey);
+  let positionRatio = savedPosition === null ? null : Number(savedPosition);
+  let dragState = null;
+  let suppressClick = false;
   let headerObserver;
+
+  if (!Number.isFinite(positionRatio)) positionRatio = null;
+  if (positionRatio !== null) positionRatio = Math.min(1, Math.max(0, positionRatio));
+
+  const getHorizontalBounds = () => {
+    const width = button.getBoundingClientRect().width || 42;
+    const minLeft = 8;
+    return {
+      minLeft,
+      maxLeft: Math.max(minLeft, window.innerWidth - width - 8),
+    };
+  };
+
+  const setHorizontalPosition = (left) => {
+    const { minLeft, maxLeft } = getHorizontalBounds();
+    const clampedLeft = Math.min(maxLeft, Math.max(minLeft, left));
+    button.style.left = `${clampedLeft}px`;
+    button.style.right = 'auto';
+    return clampedLeft;
+  };
+
+  const applySavedPosition = () => {
+    if (positionRatio === null) return;
+    const { minLeft, maxLeft } = getHorizontalBounds();
+    setHorizontalPosition(minLeft + (maxLeft - minLeft) * positionRatio);
+  };
 
   const observePageHeader = () => {
     headerObserver?.disconnect();
@@ -72,9 +103,55 @@ function initializeBackToTop() {
   };
 
   new MutationObserver(observePageHeader).observe(view, { childList: true });
+  button.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 || event.isPrimary === false) return;
+    suppressClick = false;
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startLeft: button.getBoundingClientRect().left,
+      moved: false,
+    };
+    button.setPointerCapture(event.pointerId);
+  });
+  button.addEventListener('pointermove', (event) => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - dragState.startX;
+    if (!dragState.moved && Math.abs(deltaX) < 5) return;
+    dragState.moved = true;
+    button.classList.add('is-dragging');
+    setHorizontalPosition(dragState.startLeft + deltaX);
+    event.preventDefault();
+  });
+  const finishDrag = (event) => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    const finishedDrag = dragState;
+    dragState = null;
+    button.classList.remove('is-dragging');
+    if (!finishedDrag.moved && Math.abs(event.clientX - finishedDrag.startX) >= 5) {
+      finishedDrag.moved = true;
+      setHorizontalPosition(finishedDrag.startLeft + event.clientX - finishedDrag.startX);
+    }
+    if (!finishedDrag.moved) return;
+    event.preventDefault();
+    const { minLeft, maxLeft } = getHorizontalBounds();
+    const left = setHorizontalPosition(button.getBoundingClientRect().left);
+    positionRatio = (left - minLeft) / (maxLeft - minLeft || 1);
+    localStorage.setItem(positionStorageKey, String(positionRatio));
+    suppressClick = true;
+    window.setTimeout(() => { suppressClick = false; }, 250);
+  };
+  button.addEventListener('pointerup', finishDrag);
+  button.addEventListener('pointercancel', finishDrag);
+  window.addEventListener('resize', applySavedPosition);
   button.addEventListener('click', () => {
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+  applySavedPosition();
   observePageHeader();
 }
 

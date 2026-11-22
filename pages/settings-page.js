@@ -5,7 +5,7 @@ export function renderSettings() {
       <div class="section-heading"><div><p class="eyebrow">MỤC TIÊU HỌC TẬP</p><h2>Số từ cần học mỗi ngày</h2></div></div>
       <form class="daily-goal-form" data-daily-goal-form>
         <label for="daily-word-goal">Mục tiêu từ cần học mỗi ngày</label>
-        <div class="daily-goal-controls"><input id="daily-word-goal" name="dailyWordGoal" data-daily-word-goal type="number" min="1" max="999" step="1" required><button class="primary-button" type="submit">Lưu mục tiêu</button></div>
+        <div class="daily-goal-controls"><input id="daily-word-goal" name="dailyWordGoal" data-daily-word-goal type="number" min="1" max="999" step="1" required><button class="primary-button save-button" type="submit" aria-label="Lưu mục tiêu" title="Lưu mục tiêu"><img src="image/lưu.png" alt=""></button></div>
         <p class="form-help">Số từ còn lại trong ngày sẽ giảm khi bạn hoàn thành buổi học.</p>
         <p class="notice" data-daily-goal-message role="status" aria-live="polite"></p>
       </form>

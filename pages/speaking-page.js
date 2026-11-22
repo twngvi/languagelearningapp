@@ -19,8 +19,8 @@ export function renderSpeaking() {
     </section>
     <section class="speaking-practice" data-speaking-practice hidden></section>
     <section data-speaking-library>
-    <section class="vocabulary-toolbar" aria-label="Tìm kiếm và lọc câu">
-      <label class="search-field"><span aria-hidden="true">⌕</span><input data-sentence-search type="search" placeholder="Tìm câu, bản dịch hoặc ghi chú..." aria-label="Tìm kiếm câu"></label>
+    <section class="vocabulary-toolbar speaking-library-toolbar" aria-label="Tìm kiếm và lọc câu">
+      <label class="search-field"><input data-sentence-search type="search" aria-label="Tìm kiếm câu"><span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></span></label>
       <select data-sentence-filter="topic" aria-label="Lọc theo chủ đề"><option value="">Tất cả chủ đề</option></select>
       <label class="check-filter"><input data-sentence-filter="favorite" type="checkbox"> Yêu thích</label>
       <label class="check-filter"><input data-sentence-filter="unpracticed" type="checkbox"> Chưa luyện</label>
@@ -38,12 +38,12 @@ export function renderSpeaking() {
       </div>
       <div class="lookup-result" data-sentence-translation-result role="status" aria-live="polite"></div>
       <datalist id="sentence-topics"><option value="Giao tiếp hằng ngày"><option value="Giới thiệu bản thân"><option value="Du lịch"><option value="Mua sắm"><option value="Công việc"><option value="Học tập"></datalist>
-      <div class="speech-controls sentence-speech-controls"><button class="language-swap-button" data-sentence-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch"><img src="image/2.png" alt=""></button><button class="secondary-button speech-image-button" data-sentence-action="speak-form" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><label class="sentence-rate-control"><select name="rate" aria-label="Tốc độ phát âm"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></label><div class="form-checks sentence-form-checks"><label class="sentence-favorite-toggle" title="Yêu thích"><input name="favorite" type="checkbox" aria-label="Yêu thích"><span aria-hidden="true"></span></label></div><div class="form-actions sentence-form-actions"><button class="secondary-button" data-sentence-action="cancel" type="button">Hủy</button><button class="primary-button" type="submit">Lưu câu</button></div></div>
+      <div class="speech-controls sentence-speech-controls"><button class="language-swap-button" data-sentence-action="swap-language" type="button" aria-label="Đổi chiều dịch" title="Đổi chiều dịch"><img src="image/2.png" alt=""></button><button class="secondary-button speech-image-button" data-sentence-action="speak-form" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><label class="sentence-rate-control"><select name="rate" aria-label="Tốc độ phát âm"><option value="0.25">0.25x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></label><div class="form-checks sentence-form-checks"><label class="sentence-favorite-toggle" title="Yêu thích"><input name="favorite" type="checkbox" aria-label="Yêu thích"><span aria-hidden="true"></span></label></div><div class="form-actions sentence-form-actions"><button class="secondary-button" data-sentence-action="cancel" type="button">Hủy</button><button class="primary-button save-button" type="submit" aria-label="Lưu câu" title="Lưu câu"><img src="image/lưu.png" alt=""></button></div></div>
     </form>
     <form class="vocabulary-form" data-sentence-bulk-form hidden>
       <div class="section-heading"><h2>Nhập hàng loạt câu</h2><button class="close-button" data-sentence-action="cancel-bulk" type="button" aria-label="Đóng biểu mẫu">×</button></div>
       <textarea name="bulkText" rows="7" placeholder="How are you today? - Hôm nay bạn khỏe không?&#10;Could you help me, please? - Bạn có thể giúp tôi không?" required></textarea>
-      <div class="form-actions sentence-bulk-form-actions"><button class="secondary-button" data-sentence-action="cancel-bulk" type="button">Hủy</button><button class="primary-button" type="submit">Xem trước và lưu</button></div>
+      <div class="form-actions sentence-bulk-form-actions"><button class="secondary-button" data-sentence-action="cancel-bulk" type="button">Hủy</button><button class="primary-button save-button" type="submit" aria-label="Xem trước và lưu" title="Xem trước và lưu"><img src="image/lưu.png" alt=""></button></div>
     </form>
     <section class="vocabulary-list-section"><div class="section-heading"><h2>Danh sách câu <span class="record-count" data-sentence-count>0</span></h2></div><div class="sentence-list" data-sentence-list><p class="empty-state">Đang tải dữ liệu...</p></div></section>
     </section>

@@ -7,7 +7,7 @@ import {
 } from './db.js';
 import { vocabularyRow } from '../pages/vocabulary-page.js';
 import { addVocabularyToSet, countSavedVocabularyInSet, listWordSets, normalizeWordSetColor, parseBulkVocabulary, removeVocabularyFromSet, removeWordSet, saveWordSet, editWordSet } from './word-sets.js';
-import { populateVoiceSelect, speakText } from './speech.js';
+import { populateVoiceSelect, toggleSpeech } from './speech.js';
 import { showAlert, showConfirm, showSelectPrompt, showPrompt } from './notifications.js';
 
 export const vocabularyFields = ['word', 'meaning', 'pronunciation', 'example', 'notes'];
@@ -285,7 +285,7 @@ export async function initializeVocabularySetPage() {
       const row = event.target.closest('[data-vocabulary-id]');
       const record = row ? setRecords.find((item) => item.id === row.dataset.vocabularyId) : null;
       if (vocabularyAction === 'speak' && record) {
-        speakText(record.word);
+        toggleSpeech(event.target.closest('[data-vocabulary-action="speak"]'), record.word);
         return;
       }
       if (vocabularyAction === 'favorite' && record) {
@@ -511,7 +511,10 @@ export async function initializeVocabularySetPage() {
       // Show loading state
       const originalLabel = submitBtn.textContent;
       submitBtn.disabled = true;
-      submitBtn.textContent = `Đang lưu 0/${newItems.length}...`;
+      submitBtn.innerHTML = '<img src="image/lưu.png" alt="">';
+      submitBtn.classList.add('save-button');
+      submitBtn.setAttribute('aria-label', 'Lưu dữ liệu');
+      submitBtn.title = 'Lưu dữ liệu';
 
       // Helper: lookup pronunciation with timeout (3s) to avoid blocking UI
       const withTimeout = (promise, ms) => Promise.race([
@@ -556,7 +559,7 @@ export async function initializeVocabularySetPage() {
         setRecords.push(savedRecord);
         existingWords.add(savedRecord.word.toLocaleLowerCase());
         savedCount++;
-        submitBtn.textContent = `Đang lưu ${savedCount}/${newItems.length}...`;
+        submitBtn.innerHTML = '<img src="image/lưu.png" alt="">';
       }
 
       renderSetList();
@@ -567,7 +570,9 @@ export async function initializeVocabularySetPage() {
       await showAlert(`Không thể nhập từ hàng loạt: ${error.message}`);
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = originalLabel || 'Lưu dữ liệu';
+      submitBtn.innerHTML = originalLabel?.trim()
+        ? '<img src="image/lưu.png" alt="">'
+        : '<img src="image/lưu.png" alt="">';
     }
   });
 
@@ -1039,7 +1044,7 @@ export async function initializeVocabularyPage() {
         }
       }
       if (action === 'speak' && record && 'speechSynthesis' in window) {
-        speakText(record.word);
+        toggleSpeech(actionElement, record.word);
       }
       if (action === 'lookup') {
         const lookupResult = view.querySelector('[data-lookup-result]');
@@ -1067,7 +1072,7 @@ export async function initializeVocabularyPage() {
           const speechText = translationDirection === 'en-vi'
             ? form.querySelector('[name="word"]').value
             : form.querySelector('[name="meaning"]').value;
-          speakText(speechText, {
+          toggleSpeech(actionElement, speechText, {
             voiceName: form.querySelector('[name="voice"]').value,
             rate: form.querySelector('[name="rate"]').value,
           });
@@ -1174,11 +1179,23 @@ export async function initializeVocabularyPage() {
       confirmLabel: 'Lưu dữ liệu',
     })) return;
     const originalLabel = submitBtn?.textContent;
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = `Đang lưu ${valid.length} từ...`; }
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<img src="image/lưu.png" alt="">';
+      submitBtn.classList.add('save-button');
+      submitBtn.setAttribute('aria-label', 'Lưu dữ liệu');
+      submitBtn.title = 'Lưu dữ liệu';
+    }
     try {
       await Promise.all(valid.map((item) => saveVocabulary(item.data)));
     } finally {
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalLabel || 'Xem trước và lưu'; }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<img src="image/lưu.png" alt="">';
+        submitBtn.classList.add('save-button');
+        submitBtn.setAttribute('aria-label', 'Xem trước và lưu');
+        submitBtn.title = 'Xem trước và lưu';
+      }
     }
     bulkForm.reset();
     bulkForm.hidden = true;

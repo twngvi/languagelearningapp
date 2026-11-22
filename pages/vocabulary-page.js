@@ -24,7 +24,7 @@ export function renderVocabulary() {
           <span class="field-label">Bộ từ</span>
           <button class="word-set-picker-trigger" data-word-set-toggle type="button">Chọn bộ từ</button>
           <div class="word-set-picker-menu" data-word-set-menu hidden>
-            <input data-word-set-search type="search" placeholder="Tìm bộ từ..." aria-label="Tìm bộ từ">
+            <input data-word-set-search type="search" aria-label="Tìm bộ từ">
             <div class="word-set-picker-options" data-word-set-options></div>
             <div class="word-set-create"><input data-word-set-new placeholder="Tên bộ mới"><button class="secondary-button" data-word-set-create type="button">+ Tạo bộ</button></div>
           </div>
@@ -38,10 +38,10 @@ export function renderVocabulary() {
       <div class="lookup-result" data-lookup-result role="status" aria-live="polite"></div>
       <div class="speech-controls"><button class="secondary-button" data-vocabulary-action="lookup" type="button">Tra cứu English</button><button class="secondary-button speech-image-button" data-vocabulary-action="speak-form" type="button" aria-label="Phát âm"><img src="image/logo trên sidebar2.png" alt=""></button><label>Giọng đọc<select name="voice"><option value="">Giọng mặc định</option></select></label><label>Tốc độ<input name="rate" type="range" min="0.5" max="2" step="0.1" value="1"></label></div>
       <div class="form-checks"><label><input name="favorite" type="checkbox"> Yêu thích</label><label><input name="difficult" type="checkbox"> Từ khó</label><label><input name="dueForReview" type="checkbox"> Cần ôn</label></div>
-      <div class="form-actions"><button class="secondary-button" data-vocabulary-action="cancel" type="button">Hủy</button><button class="primary-button" type="submit">Lưu từ</button></div>
+      <div class="form-actions"><button class="secondary-button" data-vocabulary-action="cancel" type="button">Hủy</button><button class="primary-button save-button" type="submit" aria-label="Lưu từ" title="Lưu từ"><img src="image/lưu.png" alt=""></button></div>
     </form>
-    <form class="vocabulary-form" data-bulk-form hidden><div class="section-heading"><h2>Nhập hàng loạt</h2><button class="close-button" data-vocabulary-action="cancel-bulk" type="button">×</button></div><p class="form-help">Mỗi dòng dùng dạng <code>word - nghĩa</code>. Dấu gạch ngang trong nội dung vẫn được giữ nguyên nếu không có khoảng trắng hai bên.</p><textarea name="bulkText" rows="6" placeholder="achieve - đạt được&#10;improve - cải thiện" required></textarea><div class="form-actions"><button class="primary-button" type="submit">Xem trước và lưu</button></div></form>
-    <form class="vocabulary-form word-set-form" data-set-form hidden><div class="section-heading"><h2>Bộ từ</h2><button class="close-button" data-vocabulary-action="cancel-set" type="button">×</button></div><input type="hidden" name="id"><div class="form-grid"><label>Tên bộ từ *<input name="name" required></label><fieldset class="color-field"><legend>Màu thẻ</legend><input type="hidden" name="color" value="#d1d1d1"><div class="color-palette" role="radiogroup" aria-label="Chọn màu cho bộ từ">${['#d1d1d1', '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee', '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc', '#f7d0c4', '#e8d5bd', '#d4dfca', '#c7d9d8', '#e3d3cc'].map((color, index) => `<button class="color-swatch${index === 0 ? ' is-selected' : ''}" type="button" data-set-color="${color}" style="--swatch-color: ${color}" aria-label="Màu ${index + 1}" aria-pressed="${index === 0}"></button>`).join('')}</div></fieldset></div><div class="form-actions"><button class="primary-button" type="submit">Lưu bộ từ</button></div></form>
+    <form class="vocabulary-form" data-bulk-form hidden><div class="section-heading"><h2>Nhập hàng loạt</h2><button class="close-button" data-vocabulary-action="cancel-bulk" type="button">×</button></div><p class="form-help">Mỗi dòng dùng dạng <code>word - nghĩa</code>. Dấu gạch ngang trong nội dung vẫn được giữ nguyên nếu không có khoảng trắng hai bên.</p><textarea name="bulkText" rows="6" placeholder="achieve - đạt được&#10;improve - cải thiện" required></textarea><div class="form-actions"><button class="primary-button save-button" type="submit" aria-label="Xem trước và lưu" title="Xem trước và lưu"><img src="image/lưu.png" alt=""></button></div></form>
+    <form class="vocabulary-form word-set-form" data-set-form hidden><div class="section-heading"><h2>Bộ từ</h2><button class="close-button" data-vocabulary-action="cancel-set" type="button">×</button></div><input type="hidden" name="id"><div class="form-grid"><label>Tên bộ từ *<input name="name" required></label><fieldset class="color-field"><legend>Màu thẻ</legend><input type="hidden" name="color" value="#d1d1d1"><div class="color-palette" role="radiogroup" aria-label="Chọn màu cho bộ từ">${['#d1d1d1', '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee', '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc', '#f7d0c4', '#e8d5bd', '#d4dfca', '#c7d9d8', '#e3d3cc'].map((color, index) => `<button class="color-swatch${index === 0 ? ' is-selected' : ''}" type="button" data-set-color="${color}" style="--swatch-color: ${color}" aria-label="Màu ${index + 1}" aria-pressed="${index === 0}"></button>`).join('')}</div></fieldset></div><div class="form-actions"><button class="primary-button save-button" type="submit" aria-label="Lưu bộ từ" title="Lưu bộ từ"><img src="image/lưu.png" alt=""></button></div></form>
     <section class="word-sets-section"><div class="word-set-list" data-set-list></div></section>
   `;
 }
@@ -60,7 +60,7 @@ export function renderVocabularySet(setId) {
     </header>
     <section class="vocabulary-list-section vocabulary-set-page">
       <div class="vocabulary-search-row">
-        <label class="search-field vocabulary-set-search"><input data-vocabulary-set-search type="search" placeholder="Tìm từ, nghĩa hoặc ghi chú..." aria-label="Tìm kiếm trong bộ từ"><span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></span></label>
+        <label class="search-field vocabulary-set-search"><input data-vocabulary-set-search type="search" aria-label="Tìm kiếm trong bộ từ"><span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path></svg></span></label>
         <button class="sort-alpha-button" data-set-detail-action="sort-alpha" type="button" aria-label="Sắp xếp A đến Z" title="Sắp xếp A đến Z"><span aria-hidden="true">↑</span></button>
         <div class="vocabulary-selection-toolbar" data-vocabulary-selection-toolbar hidden>
         <span data-vocabulary-selected-count>0 từ</span>
@@ -86,13 +86,13 @@ export function renderVocabularySet(setId) {
           </div>
           <input class="word-meaning detail-meaning-field" name="meaning" required placeholder="Nghĩa tiếng Việt" aria-label="Nghĩa tiếng Việt">
         </div>
-        <div class="row-actions detail-row-actions"><button class="primary-button" type="submit">Lưu</button><button class="close-button" data-set-detail-action="cancel-new-word" type="button" aria-label="Đóng biểu mẫu">×</button></div>
+        <div class="row-actions detail-row-actions"><button class="primary-button save-button" type="submit" aria-label="Lưu" title="Lưu"><img src="image/lưu.png" alt=""></button><button class="close-button" data-set-detail-action="cancel-new-word" type="button" aria-label="Đóng biểu mẫu">×</button></div>
       </form>
       <form class="vocabulary-form detail-bulk-form" data-detail-bulk-form hidden>
         <div class="section-heading"><h2>Nhập hàng loạt vào bộ này</h2><button class="close-button" data-set-detail-action="cancel-bulk" type="button" aria-label="Đóng biểu mẫu">×</button></div>
         <p class="form-help">Mỗi dòng dùng dạng <code>word - nghĩa</code>.</p>
         <textarea name="bulkText" rows="6" placeholder="achieve - đạt được&#10;improve - cải thiện" required></textarea>
-        <div class="form-actions"><button class="primary-button" type="submit">Lưu dữ liệu</button></div>
+        <div class="form-actions"><button class="primary-button save-button" type="submit" aria-label="Lưu dữ liệu" title="Lưu dữ liệu"><img src="image/lưu.png" alt=""></button></div>
       </form>
       <form class="vocabulary-form word-set-form detail-edit-form" data-set-detail-form hidden>
         <div class="section-heading"><h2>Chỉnh sửa bộ từ</h2><button class="close-button" data-set-detail-action="cancel-edit" type="button" aria-label="Đóng chỉnh sửa">×</button></div>
@@ -101,7 +101,7 @@ export function renderVocabularySet(setId) {
           <label>Tên bộ từ *<input name="name" required></label>
           <fieldset class="color-field"><legend>Màu thẻ</legend><input type="hidden" name="color" value="#d1d1d1"><div class="color-palette" role="radiogroup" aria-label="Chọn màu cho bộ từ">${['#d1d1d1', '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee', '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc', '#f7d0c4', '#e8d5bd', '#d4dfca', '#e3d3cc'].map((color, index) => `<button class="color-swatch${index === 0 ? ' is-selected' : ''}" type="button" data-detail-set-color="${color}" style="--swatch-color: ${color}" aria-label="Màu ${index + 1}" aria-pressed="${index === 0}"></button>`).join('')}</div></fieldset>
         </div>
-        <div class="form-actions"><button class="primary-button" type="submit"><img src="image/Shinam.png" alt=""> Lưu thay đổi</button></div>
+        <div class="form-actions"><button class="primary-button save-button" type="submit" aria-label="Lưu thay đổi" title="Lưu thay đổi"><img src="image/lưu.png" alt=""></button></div>
       </form>
       </div>
       <div class="vocabulary-list" data-vocabulary-set-list data-set-id="${escapeHtml(setId)}"><p class="empty-state">Đang tải dữ liệu...</p></div>

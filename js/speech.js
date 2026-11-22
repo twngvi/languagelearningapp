@@ -1,6 +1,7 @@
 const defaultRate = 1;
 const SPEECH_PREFERENCES_KEY = 'shin-speech-preferences';
 let speechRequestId = 0;
+let activeSpeech = null;
 
 export function getSpeechPreferences() {
   try {
@@ -46,14 +47,24 @@ function getPreferredVoice(voices, lang) {
   return [...englishVoices].sort((first, second) => getVoiceScore(second) - getVoiceScore(first))[0];
 }
 
-export function speakText(text, { voiceName, rate, lang = 'en-US' } = {}) {
+function setButtonPressed(button, pressed) {
+  if (button) button.setAttribute('aria-pressed', String(pressed));
+}
+
+function clearActiveSpeech(requestId) {
+  if (activeSpeech?.requestId !== requestId) return;
+  setButtonPressed(activeSpeech.button, false);
+  activeSpeech = null;
+}
+
+function startSpeech(text, { voiceName, rate, lang = 'en-US' } = {}, button = null) {
   if (!isSpeechSupported()) {
     throw new Error('Trình duyệt này không hỗ trợ phát âm.');
   }
   const content = String(text || '').trim();
   if (!content) throw new TypeError('Không có nội dung để phát âm.');
-  const requestId = ++speechRequestId;
-  window.speechSynthesis.cancel();
+  cancelSpeech();
+  const requestId = speechRequestId;
   const utterance = new SpeechSynthesisUtterance(content);
   utterance.lang = lang;
   const preferences = getSpeechPreferences();
@@ -63,14 +74,41 @@ export function speakText(text, { voiceName, rate, lang = 'en-US' } = {}) {
   const voices = getVoices();
   const voice = voices.find((item) => item.name === selectedVoiceName) || (!selectedVoiceName ? getPreferredVoice(voices, lang) : null);
   if (voice) utterance.voice = voice;
+  activeSpeech = { button, requestId };
+  setButtonPressed(button, true);
+  utterance.addEventListener('end', () => clearActiveSpeech(requestId), { once: true });
+  utterance.addEventListener('error', () => clearActiveSpeech(requestId), { once: true });
   window.setTimeout(() => {
-    if (requestId === speechRequestId) window.speechSynthesis.speak(utterance);
+    if (requestId === speechRequestId && activeSpeech?.requestId === requestId) {
+      window.speechSynthesis.speak(utterance);
+    }
   }, 0);
   return utterance;
 }
 
+export function speakText(text, options = {}) {
+  return startSpeech(text, options);
+}
+
+export function toggleSpeech(button, text, options = {}) {
+  if (activeSpeech?.button === button) {
+    cancelSpeech();
+    return false;
+  }
+  startSpeech(text, options, button);
+  return true;
+}
+
+export function isSpeechActive(button) {
+  return activeSpeech?.button === button;
+}
+
 export function cancelSpeech() {
   speechRequestId += 1;
+  if (activeSpeech) {
+    setButtonPressed(activeSpeech.button, false);
+    activeSpeech = null;
+  }
   if (isSpeechSupported()) window.speechSynthesis.cancel();
 }
 

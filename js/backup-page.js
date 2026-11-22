@@ -18,6 +18,17 @@ export function initializeBackupPage() {
   let backup = null;
   let cloud;
 
+  const describeSyncError = (error) => {
+    const message = String(error?.message || error || '');
+    if (message.includes('app_records') || message.includes('PGRST205')) {
+      return 'Supabase đã kết nối nhưng chưa có bảng app_records. Chạy supabase-schema.sql trong SQL Editor rồi thử lại.';
+    }
+    if (message === 'Failed to fetch') {
+      return 'Không kết nối được Supabase. Kiểm tra URL dự án, mạng hoặc trạng thái dự án.';
+    }
+    return message;
+  };
+
   const loadCloud = async () => {
     if (cloud) return cloud;
     cloud = {
@@ -79,7 +90,13 @@ export function initializeBackupPage() {
         await syncAllLocalData();
         showSyncMessage('Đã đồng bộ dữ liệu với Supabase.');
       } catch (error) {
-        showSyncMessage(error.message, 'error');
+        showSyncMessage(describeSyncError(error), 'error');
+      }
+    } else {
+      const authError = sessionStorage.getItem('shin-auth-error');
+      if (authError) {
+        showSyncMessage(authError, 'error');
+        sessionStorage.removeItem('shin-auth-error');
       }
     }
   };
@@ -91,12 +108,21 @@ export function initializeBackupPage() {
       await requestMagicLink(new FormData(loginForm).get('email'));
       showSyncMessage('Đã gửi link đăng nhập. Hãy mở email để xác nhận.');
     } catch (error) {
-      showSyncMessage(error.message, 'error');
+      showSyncMessage(describeSyncError(error), 'error');
     }
+  });
+  loadCloud().then(({ supabase }) => {
+    supabase.auth.onAuthStateChange(() => {
+      renderAccount().catch((error) => {
+        showSyncMessage(describeSyncError(error), 'error');
+      });
+    });
+  }).catch((error) => {
+    console.error('Không thể theo dõi đăng nhập Supabase:', error);
   });
   renderAccount().catch((error) => {
     console.error('Không thể khởi tạo đồng bộ Supabase:', error);
-    showSyncMessage('Chưa thể kết nối Supabase. Bạn vẫn có thể dùng database nội bộ.', 'error');
+    showSyncMessage(describeSyncError(error), 'error');
   });
 
   getDatabaseHealth()
@@ -173,7 +199,7 @@ export function initializeBackupPage() {
       }
     } catch (error) {
       console.error('Không thể xử lý sao lưu:', error);
-      showMessage(error.message, 'error');
+      showMessage(action === 'sync' ? describeSyncError(error) : error.message, 'error');
     }
   });
 }

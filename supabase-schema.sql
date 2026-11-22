@@ -13,19 +13,26 @@ alter table public.app_records
 
 alter table public.app_records enable row level security;
 
+grant select, insert, update, delete on table public.app_records to authenticated;
+grant select on table public.app_records to anon;
+
+drop policy if exists "Users can read their own app records" on public.app_records;
 create policy "Users can read their own app records"
   on public.app_records for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can insert their own app records" on public.app_records;
 create policy "Users can insert their own app records"
   on public.app_records for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own app records" on public.app_records;
 create policy "Users can update their own app records"
   on public.app_records for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete their own app records" on public.app_records;
 create policy "Users can delete their own app records"
   on public.app_records for delete
   using (auth.uid() = user_id);

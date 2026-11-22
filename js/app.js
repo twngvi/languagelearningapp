@@ -269,14 +269,35 @@ async function initializeHomePage() {
 }
 
 async function initializeAuthCallback() {
+  const search = new URLSearchParams(window.location.search);
   const hasAuthCallback = window.location.hash.includes('access_token=')
-    || new URLSearchParams(window.location.search).has('code');
-  if (!hasAuthCallback) return;
+    || window.location.hash.includes('error=')
+    || search.has('code')
+    || search.has('error');
+  if (!hasAuthCallback) {
+    return;
+  }
 
   const { supabase } = await import('./supabase.js');
-  const { error } = await supabase.auth.getSession();
-  if (error) throw error;
-  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#settings`);
+  try {
+    if (search.has('code')) {
+      const { error } = await supabase.auth.exchangeCodeForSession(search.get('code'));
+      if (error) throw error;
+    } else if (!window.location.hash.includes('access_token=')) {
+      const authError = search.get('error_description') || search.get('error');
+      if (authError) throw new Error(authError);
+    }
+
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    if (!data.session) throw new Error('Phiên đăng nhập chưa được tạo.');
+    sessionStorage.setItem('shin-auth-status', 'logged-in');
+  } catch (error) {
+    sessionStorage.setItem('shin-auth-error', error.message);
+    throw error;
+  } finally {
+    window.history.replaceState(null, '', `${window.location.pathname}#settings`);
+  }
 }
 
 initializeAuthCallback()

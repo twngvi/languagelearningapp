@@ -171,7 +171,7 @@ export async function initializeStudyPage() {
   };
 
   const speakCurrentCard = () => {
-    if (!autoPlayEnabled || mode !== 'flashcard') return;
+    if (!autoPlayEnabled) return;
     try {
       speakText(cards[index].word, { lang: 'en-US' });
     } catch (error) {
@@ -245,11 +245,11 @@ export async function initializeStudyPage() {
     if (mode === 'choose') {
       const distractors = records.filter((record) => record.id !== card.id && record.meaning).slice(0, 3);
       const options = [card, ...distractors].sort(() => Math.random() - 0.5);
-      sessionView.innerHTML = renderChooseQuestion(card, options, index, cards.length);
+      sessionView.innerHTML = renderChooseQuestion(card, options, index, cards.length, autoPlayEnabled);
     } else if (mode === 'type') {
-      sessionView.innerHTML = renderTypeQuestion(card, index, cards.length);
+      sessionView.innerHTML = renderTypeQuestion(card, index, cards.length, autoPlayEnabled);
     } else {
-      sessionView.innerHTML = renderBlankQuestion(card, index, cards.length);
+      sessionView.innerHTML = renderBlankQuestion(card, index, cards.length, autoPlayEnabled);
     }
   };
 
@@ -310,11 +310,9 @@ export async function initializeStudyPage() {
         sessionStartedAt = Date.now();
         setup.hidden = true;
         sessionView.hidden = false;
-        if (mode === 'flashcard') {
-          showCard();
-          speakCurrentCard();
-        }
+        if (mode === 'flashcard') showCard();
         else showQuizCard();
+        speakCurrentCard();
       }
       if (action === 'mode') {
         view.querySelectorAll('[data-study-mode]').forEach((button) => button.classList.toggle('is-selected', button === actionElement));
@@ -380,6 +378,7 @@ export async function initializeStudyPage() {
       }
       if (action === 'speak-sentence') toggleSpeech(actionElement, cards[index].example);
       if (actionElement.dataset.quizAnswer) {
+        cancelSpeech();
         const selected = records.find((record) => record.id === actionElement.dataset.quizAnswer);
         const correct = selected?.id === cards[index].id;
         answers.push({ cardId: cards[index].id, answer: selected?.meaning || '', expected: cards[index].meaning, correct });
@@ -421,17 +420,20 @@ export async function initializeStudyPage() {
   const advance = async () => {
     if (index === cards.length - 1) await finish();
     else {
+      cancelSpeech();
       index += 1;
       flipped = false;
       difficult = false;
       if (mode === 'flashcard') showCard();
       else showQuizCard();
+      speakCurrentCard();
     }
   };
 
   view.addEventListener('submit', async (event) => {
     if (!event.target.matches('[data-quiz-form]')) return;
     event.preventDefault();
+    cancelSpeech();
     const answer = event.target.querySelector('[data-quiz-input]').value;
     const card = cards[index];
     const expected = mode === 'blank' ? card.word : card.word;

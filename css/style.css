@@ -1597,7 +1597,8 @@ button:disabled {
 
 .study-session-header {
   display: flex;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 2px;
 }
 
@@ -1764,11 +1765,7 @@ button:disabled {
   100% { opacity: 0; scale: .98; }
 }
 
-.flashcard-autoplay {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 4;
+.study-autoplay-control {
   display: inline-flex;
   width: 40px;
   height: 40px;
@@ -1783,13 +1780,20 @@ button:disabled {
   cursor: pointer;
 }
 
-.flashcard-autoplay.is-enabled {
+.flashcard-autoplay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+}
+
+.study-autoplay-control.is-enabled {
   color: var(--primary);
   border-color: #c9c4fa;
   background: #f3f1ff;
 }
 
-.flashcard-autoplay svg {
+.study-autoplay-control svg {
   width: 22px;
   height: 22px;
   fill: currentColor;
@@ -1799,7 +1803,7 @@ button:disabled {
   stroke-width: 1.8;
 }
 
-.flashcard-autoplay:focus-visible {
+.study-autoplay-control:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }

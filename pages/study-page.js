@@ -4,8 +4,21 @@ function escapeHtml(value) {
   }[character]));
 }
 
-function renderStudyExit() {
-  return '<div class="study-session-header"><button class="secondary-button study-exit-button" data-study-action="exit" type="button" aria-label="Thoát buổi học" title="Thoát buổi học"><span aria-hidden="true">←</span></button></div>';
+function renderAutoPlayControl(autoPlayEnabled, locationClass) {
+  return `
+    <button class="study-autoplay-control ${locationClass} ${autoPlayEnabled ? 'is-enabled' : ''}" data-study-action="autoplay" type="button" aria-label="Tự động phát âm: ${autoPlayEnabled ? 'bật' : 'tắt'}" aria-pressed="${autoPlayEnabled}" title="Bật/tắt tự động phát âm">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 9v6h4l5 4V5L7 9H3z"></path>
+        ${autoPlayEnabled ? '<path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a9 9 0 0 1 0 11"></path>' : '<path d="m16 9 5 6m0-6-5 6"></path>'}
+      </svg>
+    </button>`;
+}
+
+function renderStudyExit(autoPlayEnabled) {
+  const autoPlayControl = typeof autoPlayEnabled === 'boolean'
+    ? renderAutoPlayControl(autoPlayEnabled, 'study-header-autoplay')
+    : '';
+  return `<div class="study-session-header"><button class="secondary-button study-exit-button" data-study-action="exit" type="button" aria-label="Thoát buổi học" title="Thoát buổi học"><span aria-hidden="true">←</span></button>${autoPlayControl}</div>`;
 }
 
 export function renderStudy() {
@@ -48,12 +61,7 @@ export function renderStudyCard(card, direction, index, total, flipped = false, 
           </span>
         </button>
       </div>
-      <button class="flashcard-autoplay ${autoPlayEnabled ? 'is-enabled' : ''}" data-study-action="autoplay" type="button" aria-label="Tự động phát âm: ${autoPlayEnabled ? 'bật' : 'tắt'}" aria-pressed="${autoPlayEnabled}" title="Bật/tắt tự động phát âm">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M3 9v6h4l5 4V5L7 9H3z"></path>
-          ${autoPlayEnabled ? '<path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a9 9 0 0 1 0 11"></path>' : '<path d="m16 9 5 6m0-6-5 6"></path>'}
-        </svg>
-      </button>
+      ${renderAutoPlayControl(autoPlayEnabled, 'flashcard-autoplay')}
     </div>
     <div class="study-actions flashcard-controls">
       <button class="flashcard-control" data-study-action="previous" type="button" aria-label="Từ trước">&lt;&lt;</button>
@@ -66,15 +74,15 @@ export function renderStudyCard(card, direction, index, total, flipped = false, 
   `;
 }
 
-export function renderChooseQuestion(card, options, index, total) {
-  return `${renderStudyExit()}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ CHỌN NGHĨA</small><h2>Nghe từ rồi chọn đáp án</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><div class="answer-options">${options.map((option) => `<button class="answer-option" data-quiz-answer="${escapeHtml(option.id)}" type="button">${escapeHtml(option.meaning)}</button>`).join('')}</div>`;
+export function renderChooseQuestion(card, options, index, total, autoPlayEnabled = true) {
+  return `${renderStudyExit(autoPlayEnabled)}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ CHỌN NGHĨA</small><h2>Nghe từ rồi chọn đáp án</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><div class="answer-options">${options.map((option) => `<button class="answer-option" data-quiz-answer="${escapeHtml(option.id)}" type="button">${escapeHtml(option.meaning)}</button>`).join('')}</div>`;
 }
 
-export function renderTypeQuestion(card, index, total) {
-  return `${renderStudyExit()}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ GÕ TỪ</small><h2>Nghe và nhập từ tiếng Anh</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Câu trả lời" placeholder="Nhập từ bạn nghe được" required><button class="primary-button" type="submit">Kiểm tra</button></form>`;
+export function renderTypeQuestion(card, index, total, autoPlayEnabled = true) {
+  return `${renderStudyExit(autoPlayEnabled)}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>NGHE VÀ GÕ TỪ</small><h2>Nghe và nhập từ tiếng Anh</h2><button class="primary-button speech-image-button" data-study-action="speak" type="button" aria-label="Phát âm từ"><img src="image/logo trên sidebar2.png" alt=""></button></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Câu trả lời" placeholder="Nhập từ bạn nghe được" required><button class="primary-button" type="submit">Kiểm tra</button></form>`;
 }
 
-export function renderBlankQuestion(card, index, total) {
+export function renderBlankQuestion(card, index, total, autoPlayEnabled = true) {
   const sentence = card.example.replace(new RegExp(card.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '_____');
-  return `${renderStudyExit()}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>FILL IN THE BLANK</small><h2>Điền từ còn thiếu</h2><p class="sentence-prompt">${escapeHtml(sentence)}</p><p class="meaning-hint">${escapeHtml(card.meaning)}</p></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Từ còn thiếu" placeholder="Nhập từ còn thiếu" required><button class="primary-button" type="submit">Kiểm tra</button></form><button class="secondary-button speech-image-button" data-study-action="speak-sentence" type="button" aria-label="Phát âm cả câu"><img src="image/logo trên sidebar2.png" alt=""></button>`;
+  return `${renderStudyExit(autoPlayEnabled)}<div class="study-progress">Câu ${index + 1} / ${total}</div><div class="quiz-prompt"><small>FILL IN THE BLANK</small><h2>Điền từ còn thiếu</h2><p class="sentence-prompt">${escapeHtml(sentence)}</p><p class="meaning-hint">${escapeHtml(card.meaning)}</p></div><form class="quiz-form" data-quiz-form><input data-quiz-input autocomplete="off" aria-label="Từ còn thiếu" placeholder="Nhập từ còn thiếu" required><button class="primary-button" type="submit">Kiểm tra</button></form><button class="secondary-button speech-image-button" data-study-action="speak-sentence" type="button" aria-label="Phát âm cả câu"><img src="image/logo trên sidebar2.png" alt=""></button>`;
 }

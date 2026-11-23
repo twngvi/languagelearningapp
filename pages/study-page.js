@@ -19,15 +19,13 @@ export function renderStudy() {
         <button class="study-mode" data-study-action="mode" data-study-mode="type" type="button">Listen and Type<small>Nghe và gõ từ</small></button>
         <button class="study-mode" data-study-action="mode" data-study-mode="blank" type="button">Fill in the Blank<small>Điền từ vào câu</small></button>
       </div>
-      <div class="form-grid">
+      <div class="form-grid study-options-grid">
         <label>Bộ từ<select data-study-set><option value="">Tất cả từ vựng</option></select></label>
-        <div class="study-preferences-row">
-          <label>Số lượng thẻ<select data-study-amount><option value="5">5 thẻ</option><option value="10" selected>10 thẻ</option><option value="20">20 thẻ</option></select></label>
-          <label>Chiều học<select data-study-direction><option value="en-vi">English → Tiếng Việt</option><option value="vi-en">Tiếng Việt → English</option></select></label>
-        </div>
+        <label>Chiều học<select data-study-direction><option value="en-vi">English → Tiếng Việt</option><option value="vi-en">Tiếng Việt → English</option></select></label>
+        <label>Số lượng thẻ<select data-study-amount><option value="5">5 thẻ</option><option value="10" selected>10 thẻ</option><option value="20">20 thẻ</option></select></label>
+        <div class="study-start-row"><button class="primary-button study-start-button" data-study-action="start" type="button"><img class="study-start-character" src="image/nútbatdauhoc.png" alt=""><span>Bắt đầu học</span></button></div>
       </div>
       <p class="study-message" data-study-message></p>
-      <div class="study-start-row"><button class="primary-button study-start-button" data-study-action="start" type="button"><img class="study-start-character" src="image/nútbatdauhoc.png" alt=""><span>Bắt đầu học</span></button></div>
     </section>
     <section class="study-session" data-study-session hidden></section>
   `;

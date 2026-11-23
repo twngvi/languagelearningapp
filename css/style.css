@@ -763,18 +763,8 @@ h2 {
 }
 
 .study-setup .form-grid {
-  margin: 20px 0;
-}
-
-.study-setup .form-grid > label:first-child,
-.study-preferences-row {
-  grid-column: 1 / -1;
-}
-
-.study-preferences-row {
-  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
+  margin: 20px 0 10px;
 }
 
 .study-modes {
@@ -1537,56 +1527,70 @@ button:disabled {
 
 .study-start-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 4px;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: stretch;
+  margin-top: 0;
 }
 
-.study-start-button.study-start-button {
+.study-setup .study-start-button {
   display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  height: auto;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-width: 170px;
-  min-height: 38px;
-  height: 38px;
-  padding: 6px 16px;
+  gap: 6px;
+  padding: 6px 8px;
   color: #fff;
-  background: var(--primary);
-  box-shadow: 0 10px 24px rgba(101, 89, 214, 0.24);
+  background: linear-gradient(135deg, #5db98b, #328962);
+  box-shadow: 0 7px 16px rgba(50, 137, 98, 0.24);
   border-radius: 12px;
   font-size: 14px;
-  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.study-setup .study-start-button span {
+  margin-left: 0;
+  white-space: nowrap;
 }
 
 .study-start-character {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
   object-fit: contain;
-  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 160ms ease;
 }
 
-.study-start-button:active,
-.study-start-button:focus-visible,
-.study-start-button:hover {
+.study-setup .study-start-button:focus-visible,
+.study-setup .study-start-button:hover {
   color: #fff;
-  background: var(--primary);
+  background: linear-gradient(135deg, #4da97b, #287850);
 }
 
-.study-start-button:hover,
-.study-start-button:focus-visible,
+.study-setup .study-start-button:hover,
+.study-setup .study-start-button:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(50, 137, 98, 0.3);
+}
+
+.study-setup .study-start-button:active {
+  transform: translateY(0);
+}
+
 .study-summary .study-restart-button:hover,
 .study-summary .study-restart-button:focus-visible {
   transform: translateY(-4px) scale(1.03);
   box-shadow: 0 13px 26px rgba(101, 89, 214, 0.3);
 }
 
-.study-start-button:hover .study-start-character,
-.study-start-button:focus-visible .study-start-character {
-  transform: translateY(-8px) scale(1.08);
+.study-setup .study-start-button:hover .study-start-character,
+.study-setup .study-start-button:focus-visible .study-start-character {
+  transform: translateY(-2px);
 }
 
-.study-start-button:active,
 .study-summary .study-restart-button:active {
   transform: translateY(-1px) scale(0.98);
 }
@@ -4844,17 +4848,28 @@ button {
     padding: 18px;
   }
 
-  .study-preferences-row {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  .study-options-grid {
     gap: 8px;
   }
 
-  .study-preferences-row label:last-child .custom-select-trigger,
+  .study-options-grid > label:nth-child(2) .custom-select-trigger,
   .speaking-setup .form-grid > label:nth-child(3) .custom-select-trigger {
     padding: 7px 22px 7px 7px;
     background-position: right 6px center;
     background-size: 12px 12px;
     font-size: 11px;
+  }
+
+  .study-setup .study-start-button {
+    font-size: 12px;
+    gap: 4px;
+    padding-right: 4px;
+    padding-left: 4px;
+  }
+
+  .study-start-character {
+    width: 26px;
+    height: 26px;
   }
 
   .speaking-setup .form-grid {

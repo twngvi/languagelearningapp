@@ -1531,7 +1531,7 @@ button:disabled {
 
 .study-session {
   max-width: 620px;
-  margin: 28px auto 0;
+  margin: 18px auto 0;
   text-align: center;
 }
 
@@ -1593,19 +1593,31 @@ button:disabled {
 
 .study-session-header {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
+  justify-content: flex-start;
+  margin-bottom: 2px;
 }
 
 .study-exit-button {
+  display: inline-flex;
+  width: 40px;
+  min-width: 40px;
+  height: 36px;
   min-height: 36px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
   color: #bd4f5d;
   border-color: #ecc2c7;
   background: #fff5f6;
 }
 
+.study-exit-button span {
+  font-size: 24px;
+  line-height: 1;
+}
+
 .study-progress {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
@@ -1633,55 +1645,159 @@ button:disabled {
   min-height: 290px;
   overflow: hidden;
   border-radius: 20px;
-  perspective: 1200px;
 }
 
-.flashcard-stage > .flashcard.is-leaving-to-left,
-.flashcard-stage > .flashcard.is-leaving-to-right,
-.flashcard-stage > .flashcard.is-entering-from-right,
-.flashcard-stage > .flashcard.is-entering-from-left {
+.flashcard-scene {
+  position: relative;
+}
+
+.flashcard-stage > .flashcard.is-flying-out-left,
+.flashcard-stage > .flashcard.is-flying-out-right,
+.flashcard-stage > .flashcard.is-flying-in-left,
+.flashcard-stage > .flashcard.is-flying-in-right {
   position: absolute;
   inset: 0;
   z-index: 2;
+  transform-origin: center;
   will-change: transform;
 }
 
-.flashcard-stage > .flashcard.is-entering-from-right {
+.flashcard-stage > .flashcard.is-flying-in-left,
+.flashcard-stage > .flashcard.is-flying-in-right {
   z-index: 3;
-  animation: flashcard-enter-from-right 420ms cubic-bezier(.22, .72, .22, 1) forwards;
 }
 
-.flashcard-stage > .flashcard.is-entering-from-left {
-  z-index: 3;
-  animation: flashcard-enter-from-left 420ms cubic-bezier(.22, .72, .22, 1) forwards;
+.flashcard-stage > .flashcard.is-flying-in-left {
+  animation: flashcard-fly-in-left 240ms cubic-bezier(.4, 0, .2, 1) both;
 }
 
-.flashcard-stage > .flashcard.is-leaving-to-left {
-  animation: flashcard-leave-to-left 420ms cubic-bezier(.22, .72, .22, 1) forwards;
+.flashcard-stage > .flashcard.is-flying-in-right {
+  animation: flashcard-fly-in-right 240ms cubic-bezier(.4, 0, .2, 1) both;
 }
 
-.flashcard-stage > .flashcard.is-leaving-to-right {
-  animation: flashcard-leave-to-right 420ms cubic-bezier(.22, .72, .22, 1) forwards;
+.flashcard-stage > .flashcard.is-flying-out-left {
+  animation: flashcard-fly-out-left 240ms cubic-bezier(.4, 0, .2, 1) both;
 }
 
-@keyframes flashcard-enter-from-right {
-  from { transform: translateX(105%) rotateY(-7deg); }
-  to { transform: translateX(0) rotateY(0); }
+.flashcard-stage > .flashcard.is-flying-out-right {
+  animation: flashcard-fly-out-right 240ms cubic-bezier(.4, 0, .2, 1) both;
 }
 
-@keyframes flashcard-enter-from-left {
-  from { transform: translateX(-105%) rotateY(7deg); }
-  to { transform: translateX(0) rotateY(0); }
+@keyframes flashcard-fly-out-left {
+  from { transform: translateX(0) scale(1); }
+  to { transform: translateX(-110%) scale(.9); }
 }
 
-@keyframes flashcard-leave-to-left {
-  from { transform: translateX(0) rotateY(0); }
-  to { transform: translateX(-105%) rotateY(7deg); }
+@keyframes flashcard-fly-out-right {
+  from { transform: translateX(0) scale(1); }
+  to { transform: translateX(110%) scale(.9); }
 }
 
-@keyframes flashcard-leave-to-right {
-  from { transform: translateX(0) rotateY(0); }
-  to { transform: translateX(105%) rotateY(-7deg); }
+@keyframes flashcard-fly-in-left {
+  from { transform: translateX(-110%) scale(.9); }
+  to { transform: translateX(0) scale(1); }
+}
+
+@keyframes flashcard-fly-in-right {
+  from { transform: translateX(110%) scale(.9); }
+  to { transform: translateX(0) scale(1); }
+}
+
+.flashcard-status-notice {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  max-width: 112px;
+  padding: 8px 11px;
+  color: #35556c;
+  background: #f0f8ff;
+  border: 1px solid #9bc8e8;
+  border-radius: 9px;
+  box-shadow: 0 5px 16px rgba(30, 52, 70, 0.14);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.flashcard-status-notice[data-status-notice="left"] {
+  left: -12px;
+  transform: translate(-100%, -50%);
+}
+
+.flashcard-status-notice[data-status-notice="right"] {
+  right: -12px;
+  transform: translate(100%, -50%);
+}
+
+.flashcard-status-notice.is-forgotten {
+  color: #8d4a19;
+  background: #fff6ec;
+  border-color: #efbd8e;
+}
+
+.flashcard-status-notice.is-learned {
+  color: #24734c;
+  background: #effaf3;
+  border-color: #9bd4b2;
+}
+
+.flashcard-status-notice.is-difficult {
+  color: #8b5a16;
+  background: #fff8e6;
+  border-color: #e8c86f;
+}
+
+.flashcard-status-notice.is-visible {
+  animation: flashcard-notice 850ms ease-out both;
+}
+
+@keyframes flashcard-notice {
+  0% { opacity: 0; scale: .94; }
+  14% { opacity: 1; scale: 1; }
+  72% { opacity: 1; scale: 1; }
+  100% { opacity: 0; scale: .98; }
+}
+
+.flashcard-autoplay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #85859a;
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(30, 30, 55, .08);
+  cursor: pointer;
+}
+
+.flashcard-autoplay.is-enabled {
+  color: var(--primary);
+  border-color: #c9c4fa;
+  background: #f3f1ff;
+}
+
+.flashcard-autoplay svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.flashcard-autoplay:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .flashcard-inner {
@@ -1816,6 +1932,18 @@ button:disabled {
   .flashcard-speak {
     width: 42px;
     min-width: 42px;
+  }
+}
+
+@media (max-width: 700px) {
+  .flashcard-status-notice[data-status-notice="left"] {
+    left: 8px;
+    transform: translateY(-50%);
+  }
+
+  .flashcard-status-notice[data-status-notice="right"] {
+    right: 8px;
+    transform: translateY(-50%);
   }
 }
 

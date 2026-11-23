@@ -1,7 +1,7 @@
 import { STORES, addRecord, getAllRecords, getRecord, updateRecord } from './db.js';
 import { countSavedVocabularyInSet, listWordSets } from './word-sets.js';
 import { renderStudyCard, renderChooseQuestion, renderTypeQuestion, renderBlankQuestion } from '../pages/study-page.js';
-import { toggleSpeech } from './speech.js';
+import { cancelSpeech, speakText, toggleSpeech } from './speech.js';
 import { scheduleReview } from './review.js';
 import { showConfirm } from './notifications.js';
 
@@ -90,6 +90,15 @@ export async function initializeStudyPage() {
   let mode = 'flashcard';
   let answers = [];
   let sessionStartedAt = 0;
+  const cardViewStates = new Map();
+  const noticeTimers = new Map();
+  let autoPlayEnabled = true;
+
+  try {
+    autoPlayEnabled = localStorage.getItem('shin-study-autoplay') !== 'false';
+  } catch (error) {
+    console.warn('Không thể đọc cài đặt tự động phát âm:', error);
+  }
 
   try {
     ({ records, sets } = await getStudyOptions());
@@ -108,12 +117,70 @@ export async function initializeStudyPage() {
 
   const showCard = () => {
     const card = cards[index];
+    const state = cardViewStates.get(card.id);
+    flipped = state ? state.flipped : false;
     difficult = Boolean(card.difficult);
-    sessionView.innerHTML = renderStudyCard(card, direction, index, cards.length, flipped, difficult);
+    sessionView.innerHTML = renderStudyCard(card, direction, index, cards.length, flipped, difficult, autoPlayEnabled);
+  };
+
+  const updateCardControls = () => {
+    const card = cards[index];
+    const unlearnedButton = sessionView.querySelector('[data-study-action="unlearned"]');
+    const learnedButton = sessionView.querySelector('[data-study-action="learned"]');
+    const difficultButton = sessionView.querySelector('[data-study-action="difficult"]');
+    unlearnedButton?.classList.toggle('is-selected', card.studyRating === 'forgotten');
+    unlearnedButton?.setAttribute('aria-pressed', String(card.studyRating === 'forgotten'));
+    learnedButton?.classList.toggle('is-selected', card.studyRating === 'good');
+    learnedButton?.setAttribute('aria-pressed', String(card.studyRating === 'good'));
+    difficultButton?.classList.toggle('is-selected', Boolean(card.difficult));
+    difficultButton?.setAttribute('aria-label', card.difficult ? 'Bỏ đánh dấu từ khó' : 'Đánh dấu từ khó');
   };
 
   let cardTransitioning = false;
-  const transitionToCard = (targetIndex, directionOfMotion) => {
+  let cardActionPending = false;
+  const runCardAnimation = (card, className, animationName, fallbackMs) => new Promise((resolve) => {
+    let completed = false;
+    const complete = () => {
+      if (completed) return;
+      completed = true;
+      window.clearTimeout(fallback);
+      card.removeEventListener('animationend', handleAnimationEnd);
+      resolve();
+    };
+    const handleAnimationEnd = (event) => {
+      if (event.target === card && event.animationName === animationName) complete();
+    };
+    const fallback = window.setTimeout(complete, fallbackMs);
+    card.addEventListener('animationend', handleAnimationEnd);
+    card.classList.add(className);
+  });
+
+  const showStatusNotice = (side, text, type) => {
+    const notice = sessionView.querySelector(`[data-status-notice="${side}"]`);
+    if (!notice) return;
+    window.clearTimeout(noticeTimers.get(side));
+    notice.hidden = false;
+    notice.textContent = text;
+    notice.className = `flashcard-status-notice is-${type}`;
+    void notice.offsetWidth;
+    notice.classList.add('is-visible');
+    noticeTimers.set(side, window.setTimeout(() => {
+      notice.hidden = true;
+      notice.classList.remove('is-visible');
+    }, 850));
+  };
+
+  const speakCurrentCard = () => {
+    if (!autoPlayEnabled || mode !== 'flashcard') return;
+    try {
+      speakText(cards[index].word, { lang: 'en-US' });
+    } catch (error) {
+      console.error('Không thể tự động phát âm từ:', error);
+      message.textContent = `Không thể phát âm từ: ${error.message}`;
+    }
+  };
+
+  const transitionToCard = async (targetIndex, directionOfMotion) => {
     if (cardTransitioning || targetIndex < 0 || targetIndex >= cards.length) return;
     const stage = sessionView.querySelector('.flashcard-stage');
     const currentCard = stage?.querySelector('.flashcard');
@@ -122,34 +189,55 @@ export async function initializeStudyPage() {
       flipped = false;
       difficult = Boolean(cards[index].difficult);
       showCard();
+      speakCurrentCard();
       return;
     }
 
     cardTransitioning = true;
-    const targetCard = cards[targetIndex];
-    const targetContainer = document.createElement('div');
-    targetContainer.innerHTML = renderStudyCard(targetCard, direction, targetIndex, cards.length, false, Boolean(targetCard.difficult));
-    const incomingCard = targetContainer.querySelector('.flashcard');
-    if (!incomingCard) {
-      cardTransitioning = false;
-      return;
-    }
+    cancelSpeech();
+    try {
+      const targetCard = cards[targetIndex];
+      const targetState = cardViewStates.get(targetCard.id);
+      const targetContainer = document.createElement('div');
+      targetContainer.innerHTML = renderStudyCard(
+        targetCard,
+        direction,
+        targetIndex,
+        cards.length,
+        targetState ? targetState.flipped : false,
+        Boolean(targetCard.difficult),
+        autoPlayEnabled,
+      );
+      const incomingCard = targetContainer.querySelector('.flashcard');
+      if (!incomingCard) throw new Error('Không thể hiển thị thẻ tiếp theo.');
 
-    incomingCard.classList.add(directionOfMotion === 'next'
-      ? 'is-entering-from-right'
-      : 'is-entering-from-left');
-    stage.append(incomingCard);
-    currentCard.classList.add(directionOfMotion === 'next'
-      ? 'is-leaving-to-left'
-      : 'is-leaving-to-right');
+      const incomingDirection = directionOfMotion === 'left' ? 'right' : 'left';
+      await runCardAnimation(
+        currentCard,
+        `is-flying-out-${directionOfMotion}`,
+        `flashcard-fly-out-${directionOfMotion}`,
+        320,
+      );
+      if (sessionView.hidden || !stage.isConnected) return;
+      stage.replaceChildren(incomingCard);
+      void incomingCard.offsetWidth;
+      await runCardAnimation(
+        incomingCard,
+        `is-flying-in-${incomingDirection}`,
+        `flashcard-fly-in-${incomingDirection}`,
+        360,
+      );
+      if (sessionView.hidden) return;
 
-    window.setTimeout(() => {
       index = targetIndex;
-      flipped = false;
+      flipped = targetState ? targetState.flipped : false;
       difficult = Boolean(cards[index].difficult);
-      showCard();
+      sessionView.querySelector('.study-progress').textContent = `Thẻ ${index + 1} / ${cards.length}`;
+      updateCardControls();
+      speakCurrentCard();
+    } finally {
       cardTransitioning = false;
-    }, 420);
+    }
   };
 
   const showQuizCard = () => {
@@ -166,6 +254,7 @@ export async function initializeStudyPage() {
   };
 
   const finish = async () => {
+    cancelSpeech();
     await saveStudySession({
       mode,
       direction,
@@ -189,6 +278,9 @@ export async function initializeStudyPage() {
     const actionElement = event.target.closest('[data-study-action], [data-study-rating], [data-quiz-answer]');
     if (!actionElement) return;
     const action = actionElement.dataset.studyAction;
+    if ((cardTransitioning || cardActionPending) && action !== 'exit') return;
+    const isPersistentCardAction = ['difficult', 'unlearned', 'learned'].includes(action);
+    if (isPersistentCardAction) cardActionPending = true;
     try {
       if (action === 'start') {
         const setId = view.querySelector('[data-study-set]').value;
@@ -218,7 +310,10 @@ export async function initializeStudyPage() {
         sessionStartedAt = Date.now();
         setup.hidden = true;
         sessionView.hidden = false;
-        if (mode === 'flashcard') showCard();
+        if (mode === 'flashcard') {
+          showCard();
+          speakCurrentCard();
+        }
         else showQuizCard();
       }
       if (action === 'mode') {
@@ -226,8 +321,23 @@ export async function initializeStudyPage() {
       }
       if (action === 'flip') {
         flipped = !flipped;
+        cardViewStates.set(cards[index].id, { flipped });
         actionElement.classList.toggle('is-flipped', flipped);
         actionElement.setAttribute('aria-label', flipped ? 'Lật về mặt gợi nhớ' : 'Lật để xem đáp án');
+      }
+      if (action === 'autoplay') {
+        autoPlayEnabled = !autoPlayEnabled;
+        actionElement.classList.toggle('is-enabled', autoPlayEnabled);
+        actionElement.setAttribute('aria-pressed', String(autoPlayEnabled));
+        actionElement.setAttribute('aria-label', `Tự động phát âm: ${autoPlayEnabled ? 'bật' : 'tắt'}`);
+        actionElement.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 9v6h4l5 4V5L7 9H3z"></path>${autoPlayEnabled ? '<path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a9 9 0 0 1 0 11"></path>' : '<path d="m16 9 5 6m0-6-5 6"></path>'}</svg>`;
+        try {
+          localStorage.setItem('shin-study-autoplay', String(autoPlayEnabled));
+        } catch (error) {
+          console.error('Không thể lưu cài đặt tự động phát âm:', error);
+          message.textContent = `Không thể lưu cài đặt tự động phát âm: ${error.message}`;
+        }
+        if (!autoPlayEnabled) cancelSpeech();
       }
       if (action === 'speak') {
         toggleSpeech(actionElement, cards[index].word);
@@ -236,26 +346,37 @@ export async function initializeStudyPage() {
         difficult = !difficult;
         await saveCardStudyState(cards[index].id, { difficult });
         cards[index].difficult = difficult;
-        showCard();
+        cardViewStates.set(cards[index].id, { flipped, difficult });
+        actionElement.classList.toggle('is-selected', difficult);
+        actionElement.setAttribute('aria-label', difficult ? 'Bỏ đánh dấu từ khó' : 'Đánh dấu từ khó');
+        if (difficult) showStatusNotice('right', 'Từ khó', 'difficult');
       }
       if (action === 'previous') {
-        if (index > 0) transitionToCard(index - 1, 'previous');
+        if (index > 0) await transitionToCard(index - 1, 'left');
       }
       if (action === 'unlearned') {
-        ratings.push('forgotten');
         await saveCardRating(cards[index].id, 'forgotten', difficult);
+        cards[index].studyRating = 'forgotten';
+        cards[index].memorized = false;
+        cards[index].dueForReview = true;
+        ratings.push('forgotten');
+        showStatusNotice('left', 'Chưa thuộc', 'forgotten');
         if (index === cards.length - 1) await finish();
-        else transitionToCard(index + 1, 'next');
+        else await transitionToCard(index + 1, 'left');
       }
       if (action === 'learned') {
-        ratings.push('good');
         await saveCardRating(cards[index].id, 'good', difficult);
+        cards[index].studyRating = 'good';
+        cards[index].memorized = true;
+        cards[index].dueForReview = false;
+        ratings.push('good');
+        showStatusNotice('right', 'Thuộc', 'learned');
         if (index === cards.length - 1) await finish();
-        else transitionToCard(index + 1, 'next');
+        else await transitionToCard(index + 1, 'right');
       }
       if (action === 'next') {
         if (index === cards.length - 1) await finish();
-        else transitionToCard(index + 1, 'next');
+        else await transitionToCard(index + 1, 'right');
       }
       if (action === 'speak-sentence') toggleSpeech(actionElement, cards[index].example);
       if (actionElement.dataset.quizAnswer) {
@@ -283,6 +404,7 @@ export async function initializeStudyPage() {
           iconImage: 'image/nút xóa.png',
         });
         if (confirmed) {
+          cancelSpeech();
           sessionView.hidden = true;
           setup.hidden = false;
           message.textContent = '';
@@ -291,6 +413,8 @@ export async function initializeStudyPage() {
     } catch (error) {
       console.error('Không thể xử lý phiên học:', error);
       message.textContent = `Không thể tiếp tục phiên học: ${error.message}`;
+    } finally {
+      if (isPersistentCardAction) cardActionPending = false;
     }
   });
 

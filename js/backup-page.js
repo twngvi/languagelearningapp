@@ -11,7 +11,6 @@ export function initializeBackupPage() {
   const mergeButton = view.querySelector('[data-backup-action="import-merge"]');
   const replaceButton = view.querySelector('[data-backup-action="import-replace"]');
   const databaseStatus = view.querySelector('[data-database-status]');
-  const loginForm = view.querySelector('[data-sync-login-form]');
   const syncStatus = view.querySelector('[data-sync-status]');
   const syncMessage = view.querySelector('[data-sync-message]');
   const accountActions = view.querySelector('[data-sync-account]');
@@ -91,9 +90,7 @@ export function initializeBackupPage() {
 
   const renderAccount = async () => {
     const { syncAllLocalData } = await loadCloud();
-    loginForm.hidden = true;
     accountActions.hidden = false;
-    loginForm.style.display = 'none';
     accountActions.style.display = 'flex';
     syncStatus.textContent = 'Dữ liệu chung';
     try {

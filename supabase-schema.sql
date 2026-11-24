@@ -14,13 +14,18 @@ alter table public.app_records
 alter table public.app_records
   alter column user_id drop not null;
 
-delete from public.app_records as old_record
-where exists (
-  select 1
-  from public.app_records as newer_record
-  where newer_record.store_name = old_record.store_name
-    and newer_record.record_id = old_record.record_id
-    and newer_record.updated_at > old_record.updated_at
+delete from public.app_records
+where ctid in (
+  select ctid
+  from (
+    select ctid,
+      row_number() over (
+        partition by store_name, record_id
+        order by updated_at desc nulls last, ctid desc
+      ) as duplicate_rank
+    from public.app_records
+  ) ranked
+  where duplicate_rank > 1
 );
 
 alter table public.app_records

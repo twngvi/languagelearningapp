@@ -9,14 +9,9 @@ export function renderSettings() {
       </form>
     </section>
     <section class="settings-card" data-sync-panel>
-      <div class="section-heading"><div><p class="eyebrow">ĐỒNG BỘ THIẾT BỊ</p><h2>Supabase</h2></div><span class="status-pill" data-sync-status>Chưa đăng nhập</span></div>
-      <form data-sync-login-form class="sync-login-form">
-        <label class="sync-email-field" for="sync-email"><span>Email dùng chung</span><input id="sync-email" name="email" type="email" autocomplete="email" placeholder="ban@example.com" required></label>
-        <button class="primary-button" type="submit">Gửi link đăng nhập</button>
-      </form>
-      <div class="backup-actions" data-sync-account hidden>
+      <div class="section-heading"><div><p class="eyebrow">ĐỒNG BỘ THIẾT BỊ</p><h2>Dữ liệu chung</h2></div><span class="status-pill" data-sync-status>Đang kết nối</span></div>
+      <div class="backup-actions" data-sync-account>
         <button class="secondary-button" data-sync-action="sync" type="button">Đồng bộ ngay</button>
-        <button class="danger-button" data-sync-action="sign-out" type="button">Đăng xuất</button>
       </div>
     </section>
     <section class="settings-card speech-settings-card">

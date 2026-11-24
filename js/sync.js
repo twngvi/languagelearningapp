@@ -1,4 +1,4 @@
-import { getCurrentUser, supabase } from './supabase.js';
+import { supabase } from './supabase.js';
 
 const SYNC_TABLE = 'app_records';
 let syncTimer;
@@ -10,28 +10,24 @@ function notify(status, detail = '') {
 }
 
 export async function upsertRemoteRecord(storeName, record) {
-  const user = await getCurrentUser();
-  if (!user || !navigator.onLine) return false;
+  if (!navigator.onLine) return false;
 
   const { error } = await supabase.from(SYNC_TABLE).upsert({
-    user_id: user.id,
     store_name: storeName,
     record_id: record.id,
     record,
     updated_at: record.updatedAt || new Date().toISOString(),
     deleted_at: null,
-  }, { onConflict: 'user_id,store_name,record_id' });
+  }, { onConflict: 'store_name,record_id' });
   if (error) throw error;
   return true;
 }
 
 export async function removeRemoteRecord(storeName, recordId) {
-  const user = await getCurrentUser();
-  if (!user || !navigator.onLine) return false;
+  if (!navigator.onLine) return false;
 
   const { error } = await supabase.from(SYNC_TABLE)
     .update({ deleted_at: new Date().toISOString() })
-    .eq('user_id', user.id)
     .eq('store_name', storeName)
     .eq('record_id', recordId);
   if (error) throw error;
@@ -80,8 +76,6 @@ function recordTime(value) {
 }
 
 async function performFullSync() {
-  const user = await getCurrentUser();
-  if (!user) throw new Error('Hãy đăng nhập trước khi đồng bộ.');
   if (!navigator.onLine) throw new Error('Thiết bị đang ngoại tuyến.');
 
   const { getAllRecords, STORES, saveSyncedRecord, deleteSyncedRecord } = await import('./db.js');

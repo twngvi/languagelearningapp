@@ -90,48 +90,20 @@ export function initializeBackupPage() {
   }
 
   const renderAccount = async () => {
-    const { getCurrentUser, syncAllLocalData } = await loadCloud();
-    const user = await getCurrentUser();
-    loginForm.hidden = Boolean(user);
-    accountActions.hidden = !user;
-    loginForm.style.display = user ? 'none' : '';
-    accountActions.style.display = user ? 'flex' : 'none';
-    syncStatus.textContent = user ? `Đã đăng nhập: ${user.email}` : 'Chưa đăng nhập';
-    if (user) {
-      try {
-        await syncAllLocalData();
-        showSyncMessage('Đã đồng bộ dữ liệu với Supabase.');
-      } catch (error) {
-        showSyncMessage(describeSyncError(error), 'error');
-      }
-    } else {
-      const authError = sessionStorage.getItem('shin-auth-error');
-      if (authError) {
-        showSyncMessage(authError, 'error');
-        sessionStorage.removeItem('shin-auth-error');
-      }
-    }
-  };
-
-  loginForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
+    const { syncAllLocalData } = await loadCloud();
+    loginForm.hidden = true;
+    accountActions.hidden = false;
+    loginForm.style.display = 'none';
+    accountActions.style.display = 'flex';
+    syncStatus.textContent = 'Dữ liệu chung';
     try {
-      const { requestMagicLink } = await loadCloud();
-      await requestMagicLink(new FormData(loginForm).get('email'));
-      showSyncMessage('Đã gửi link đăng nhập. Hãy mở email để xác nhận.');
+      await syncAllLocalData();
+      showSyncMessage('Đã đồng bộ dữ liệu chung trên mọi thiết bị.');
     } catch (error) {
       showSyncMessage(describeSyncError(error), 'error');
     }
-  });
-  loadCloud().then(({ supabase }) => {
-    supabase.auth.onAuthStateChange(() => {
-      renderAccount().catch((error) => {
-        showSyncMessage(describeSyncError(error), 'error');
-      });
-    });
-  }).catch((error) => {
-    console.error('Không thể theo dõi đăng nhập Supabase:', error);
-  });
+  };
+
   renderAccount().catch((error) => {
     console.error('Không thể khởi tạo đồng bộ Supabase:', error);
     showSyncMessage(describeSyncError(error), 'error');
@@ -225,13 +197,7 @@ export function initializeBackupPage() {
       if (action === 'sync') {
         const { syncAllLocalData } = await loadCloud();
         await syncAllLocalData();
-        showSyncMessage('Đã đồng bộ dữ liệu với Supabase.');
-      }
-      if (action === 'sign-out') {
-        const { signOut } = await loadCloud();
-        await signOut();
-        await renderAccount();
-        showSyncMessage('Đã đăng xuất khỏi thiết bị này.');
+        showSyncMessage('Đã đồng bộ dữ liệu chung.');
       }
     } catch (error) {
       console.error('Không thể xử lý sao lưu:', error);

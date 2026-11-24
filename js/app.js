@@ -313,8 +313,6 @@ let resumeSync;
 async function syncOnResume() {
   if (!navigator.onLine || document.visibilityState === 'hidden' || resumeSync) return;
   resumeSync = (async () => {
-    const { getCurrentUser } = await import('./supabase.js');
-    if (!await getCurrentUser()) return;
     const { syncAllLocalData } = await import('./sync.js');
     await syncAllLocalData();
   })();

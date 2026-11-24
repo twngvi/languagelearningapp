@@ -4104,6 +4104,20 @@ button:disabled {
   font-size: 11px;
 }
 
+.stat-label {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.stat-label-full,
+.stat-label-short {
+  display: block;
+}
+
+.stat-label-short {
+  display: none;
+}
+
 .vocabulary-card {
   padding: 20px 22px;
 }
@@ -4566,7 +4580,47 @@ button:disabled {
   }
 
   .overview-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stat-card {
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 5px;
+    text-align: center;
+  }
+
+  .stat-card > div {
+    min-width: 0;
+  }
+
+  .stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    font-size: 16px;
+  }
+
+  .stat-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .stat-card strong {
+    font-size: 16px;
+  }
+
+  .stat-label-full {
+    display: none;
+  }
+
+  .stat-label-short {
+    display: block;
+    font-size: 9px;
+    line-height: 1.15;
   }
 
   .home-columns {

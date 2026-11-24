@@ -8,7 +8,11 @@ export function renderVocabulary() {
   return `
     <header class="page-header vocabulary-library-header">
       <div><p class="eyebrow">KHO TỪ VỰNG</p><h1>Từ vựng</h1></div>
-      <button class="primary-button word-set-add-button" data-vocabulary-action="sets" type="button">+ Thêm bộ từ</button>
+      <div class="word-set-header-actions">
+        <button class="word-set-sort-button is-selected" data-word-set-sort="newest" type="button" aria-label="Lọc bộ từ mới nhất" title="Mới nhất">↓</button>
+        <button class="word-set-sort-button" data-word-set-sort="alpha" type="button" aria-label="Lọc bộ từ theo tên A đến Z" title="Tên A đến Z">A-Z</button>
+        <button class="primary-button word-set-add-button" data-vocabulary-action="sets" type="button">+ Thêm bộ từ</button>
+      </div>
     </header>
     <form class="vocabulary-form" data-vocabulary-form hidden>
       <div class="section-heading"><h2 data-vocabulary-form-title>Thêm từ mới</h2><button class="close-button" data-vocabulary-action="cancel" type="button" aria-label="Đóng biểu mẫu">×</button></div>

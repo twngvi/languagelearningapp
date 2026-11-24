@@ -19,6 +19,15 @@ export function normalizeWordSetColor(color) {
   return /^#[0-9a-f]{6}$/i.test(String(color || '')) ? String(color).toLowerCase() : '#d1d1d1';
 }
 
+export function createRandomWordSetColor() {
+  const colors = [
+    '#f8d7b5', '#f9edb8', '#d9efc2', '#bfe8d5', '#bde7ee',
+    '#c5ddf6', '#c9d0f4', '#d9c9f3', '#e7c8ee', '#f2c8dc',
+    '#f7d0c4', '#e8d5bd', '#d4dfca', '#c7d9d8', '#e3d3cc',
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
 export function createWordSet(input) {
   const name = String(input.name || '').trim();
   if (!name) throw new TypeError('Tên bộ từ là bắt buộc.');

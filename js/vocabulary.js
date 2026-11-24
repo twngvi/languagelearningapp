@@ -6,7 +6,7 @@ import {
   updateRecord,
 } from './db.js';
 import { vocabularyRow } from '../pages/vocabulary-page.js';
-import { addVocabularyToSet, countSavedVocabularyInSet, listWordSets, normalizeWordSetColor, parseBulkVocabulary, removeVocabularyFromSet, removeWordSet, saveWordSet, editWordSet } from './word-sets.js';
+import { addVocabularyToSet, countSavedVocabularyInSet, createRandomWordSetColor, listWordSets, normalizeWordSetColor, parseBulkVocabulary, removeVocabularyFromSet, removeWordSet, saveWordSet, editWordSet } from './word-sets.js';
 import { populateVoiceSelect, toggleSpeech } from './speech.js';
 import { showAlert, showConfirm, showSelectPrompt, showPrompt } from './notifications.js';
 
@@ -763,6 +763,7 @@ export async function initializeVocabularyPage() {
   let records = [];
   let wordSets = [];
   let editingId = null;
+  let wordSetSortMode = 'newest';
 
   const form = view.querySelector('[data-vocabulary-form]');
   const bulkForm = view.querySelector('[data-bulk-form]');
@@ -790,16 +791,24 @@ export async function initializeVocabularyPage() {
   const hideSetForm = ({ reset = false } = {}) => {
     if (reset) {
       setForm.reset();
-      syncSetColorPalette('#d1d1d1');
+      syncSetColorPalette(createRandomWordSetColor());
     }
     setForm.hidden = true;
   };
   const load = async () => {
     records = await listVocabulary();
     wordSets = await listWordSets();
+    const sortedWordSets = [...wordSets].sort((first, second) => {
+      if (wordSetSortMode === 'alpha') {
+        return String(first.name || '').localeCompare(String(second.name || ''), 'vi', { sensitivity: 'base' });
+      }
+      const firstTime = Date.parse(first.createdAt || '') || 0;
+      const secondTime = Date.parse(second.createdAt || '') || 0;
+      return wordSetSortMode === 'oldest' ? firstTime - secondTime : secondTime - firstTime;
+    });
     const vocabularyIds = new Set(records.map((record) => record.id));
     renderWordSetPicker();
-    setList.innerHTML = wordSets.length ? wordSets.map((set, index) => `
+    setList.innerHTML = sortedWordSets.length ? sortedWordSets.map((set, index) => `
       <article class="word-set-card" data-set-id="${set.id}" style="--set-color: ${normalizeWordSetColor(set.color)}">
         <img class="word-set-card-decoration" data-set-open src="image/hình gắn trên card bộ từ/${(index % 6) + 4}.png" alt="">
         <div class="word-set-card-content" data-set-open><h3>${set.name}</h3><span class="word-set-count">${countSavedVocabularyInSet(set, vocabularyIds)} từ</span></div>
@@ -1087,7 +1096,7 @@ export async function initializeVocabularyPage() {
       if (action === 'bulk') bulkForm.hidden = false;
       if (action === 'sets') {
         setForm.reset();
-        syncSetColorPalette('#d1d1d1');
+        syncSetColorPalette(createRandomWordSetColor());
         setForm.hidden = false;
       }
       if (action === 'cancel-bulk') bulkForm.hidden = true;
@@ -1115,6 +1124,29 @@ export async function initializeVocabularyPage() {
   }, true);
 
   view.addEventListener('click', async (event) => {
+    const sortButton = event.target.closest('[data-word-set-sort]');
+    if (sortButton) {
+      if (sortButton.dataset.wordSetSort !== 'alpha') {
+        wordSetSortMode = wordSetSortMode === 'alpha' || wordSetSortMode === 'oldest'
+          ? 'newest'
+          : 'oldest';
+      } else {
+        wordSetSortMode = 'alpha';
+      }
+      const dateButton = view.querySelector('[data-word-set-sort]:not([data-word-set-sort="alpha"])');
+      dateButton.textContent = wordSetSortMode === 'oldest' ? '↑' : '↓';
+      dateButton.setAttribute('aria-label', wordSetSortMode === 'oldest' ? 'Lọc bộ từ cũ nhất' : 'Lọc bộ từ mới nhất');
+      dateButton.title = wordSetSortMode === 'oldest' ? 'Cũ nhất' : 'Mới nhất';
+      view.querySelectorAll('[data-word-set-sort]').forEach((button) => {
+        if (button.dataset.wordSetSort === 'oldest' || button.dataset.wordSetSort === 'newest') {
+          button.classList.toggle('is-selected', wordSetSortMode === 'newest' || wordSetSortMode === 'oldest');
+        } else {
+          button.classList.toggle('is-selected', wordSetSortMode === 'alpha');
+        }
+      });
+      await load();
+      return;
+    }
     const actionElement = event.target.closest('[data-set-action]');
     const setCard = event.target.closest('[data-set-id]');
     if (!setCard) return;
@@ -1208,7 +1240,7 @@ export async function initializeVocabularyPage() {
     if (input.id) await editWordSet({ ...input, id: input.id });
     else await saveWordSet(input);
     setForm.reset();
-    syncSetColorPalette('#d1d1d1');
+    syncSetColorPalette(createRandomWordSetColor());
     setForm.hidden = true;
     await load();
   });
@@ -1269,7 +1301,7 @@ export async function initializeVocabularyPage() {
     if (pendingAction === 'bulk') bulkForm.hidden = false;
     if (pendingAction === 'sets') {
       setForm.reset();
-      syncSetColorPalette('#d1d1d1');
+    syncSetColorPalette(createRandomWordSetColor());
       setForm.hidden = false;
     }
     if (pendingAction === 'new') {

@@ -2261,6 +2261,35 @@ button:disabled {
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
+.word-set-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.word-set-sort-button {
+  display: grid;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  place-items: center;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(70, 70, 70, 0.08);
+}
+
+.word-set-sort-button.is-selected {
+  color: var(--primary-dark);
+  background: var(--purple-soft);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
+}
+
 .word-set-add-button:hover,
 .word-set-add-button:focus-visible {
   color: #fff;
@@ -4381,7 +4410,7 @@ button:disabled {
 
   .vocabulary-library-header .word-set-add-button {
     flex: 0 0 auto;
-    margin-top: 18px;
+    margin-top: 0;
     padding: 9px 11px;
     font-size: 11px;
     white-space: nowrap;

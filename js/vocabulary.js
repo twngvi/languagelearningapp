@@ -799,8 +799,9 @@ export async function initializeVocabularyPage() {
     records = await listVocabulary();
     wordSets = await listWordSets();
     const sortedWordSets = [...wordSets].sort((first, second) => {
-      if (wordSetSortMode === 'alpha') {
-        return String(first.name || '').localeCompare(String(second.name || ''), 'vi', { sensitivity: 'base' });
+      if (wordSetSortMode === 'alpha-asc' || wordSetSortMode === 'alpha-desc') {
+        const comparison = String(first.name || '').localeCompare(String(second.name || ''), 'vi', { sensitivity: 'base' });
+        return wordSetSortMode === 'alpha-desc' ? -comparison : comparison;
       }
       const firstTime = Date.parse(first.createdAt || '') || 0;
       const secondTime = Date.parse(second.createdAt || '') || 0;
@@ -1126,23 +1127,33 @@ export async function initializeVocabularyPage() {
   view.addEventListener('click', async (event) => {
     const sortButton = event.target.closest('[data-word-set-sort]');
     if (sortButton) {
-      if (sortButton.dataset.wordSetSort !== 'alpha') {
+      if (sortButton.dataset.wordSetSort === 'alpha-asc' || sortButton.dataset.wordSetSort === 'alpha-desc') {
+        wordSetSortMode = wordSetSortMode === 'alpha-asc'
+          ? 'alpha-desc'
+          : 'alpha-asc';
+        sortButton.dataset.wordSetSort = wordSetSortMode;
+        sortButton.textContent = wordSetSortMode === 'alpha-desc' ? 'ZA' : 'AZ';
+        sortButton.setAttribute('aria-label', wordSetSortMode === 'alpha-desc'
+          ? 'Lọc bộ từ theo tên Z đến A'
+          : 'Lọc bộ từ theo tên A đến Z');
+        sortButton.title = wordSetSortMode === 'alpha-desc' ? 'Tên Z đến A' : 'Tên A đến Z';
+      } else {
         wordSetSortMode = wordSetSortMode === 'alpha' || wordSetSortMode === 'oldest'
           ? 'newest'
           : 'oldest';
-      } else {
-        wordSetSortMode = 'alpha';
       }
-      const dateButton = view.querySelector('[data-word-set-sort]:not([data-word-set-sort="alpha"])');
+      const dateButton = view.querySelector('[data-word-set-sort="newest"], [data-word-set-sort="oldest"]');
+      if (dateButton) {
       dateButton.textContent = wordSetSortMode === 'oldest' ? '↑' : '↓';
       dateButton.setAttribute('aria-label', wordSetSortMode === 'oldest' ? 'Lọc bộ từ cũ nhất' : 'Lọc bộ từ mới nhất');
       dateButton.title = wordSetSortMode === 'oldest' ? 'Cũ nhất' : 'Mới nhất';
+      }
       view.querySelectorAll('[data-word-set-sort]').forEach((button) => {
-        if (button.dataset.wordSetSort === 'oldest' || button.dataset.wordSetSort === 'newest') {
-          button.classList.toggle('is-selected', wordSetSortMode === 'newest' || wordSetSortMode === 'oldest');
-        } else {
-          button.classList.toggle('is-selected', wordSetSortMode === 'alpha');
-        }
+        const isDateButton = button.dataset.wordSetSort === 'oldest' || button.dataset.wordSetSort === 'newest';
+        const selected = isDateButton
+          ? wordSetSortMode === 'newest' || wordSetSortMode === 'oldest'
+          : wordSetSortMode === 'alpha-asc' || wordSetSortMode === 'alpha-desc';
+        button.classList.toggle('is-selected', selected);
       });
       await load();
       return;

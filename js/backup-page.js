@@ -41,6 +41,7 @@ export function initializeBackupPage() {
     if (!syncMessage) return;
     syncMessage.textContent = text;
     syncMessage.className = `notice ${type}`;
+    syncMessage.hidden = false;
   };
 
   const speechVoice = view.querySelector('[data-speech-voice]');
@@ -93,6 +94,7 @@ export function initializeBackupPage() {
     accountActions.hidden = false;
     accountActions.style.display = 'flex';
     syncStatus.textContent = 'Dữ liệu chung';
+    showSyncMessage('Đang đồng bộ dữ liệu chung...');
     try {
       await syncAllLocalData();
       showSyncMessage('Đã đồng bộ dữ liệu chung trên mọi thiết bị.');
@@ -145,7 +147,8 @@ export function initializeBackupPage() {
   });
 
   view.addEventListener('click', async (event) => {
-    const action = event.target.closest('[data-backup-action]')?.dataset.backupAction;
+    const actionButton = event.target.closest('[data-sync-action], [data-backup-action]');
+    const action = actionButton?.dataset.syncAction || actionButton?.dataset.backupAction;
     try {
       if (action === 'clear-notes') {
         if (!await showConfirm('Thao tác này sẽ xóa ghi chú của tất cả từ và câu. Từ/câu và dữ liệu khác sẽ được giữ nguyên. Tiếp tục?', {
@@ -193,6 +196,7 @@ export function initializeBackupPage() {
       }
       if (action === 'sync') {
         const { syncAllLocalData } = await loadCloud();
+        showSyncMessage('Đang đồng bộ dữ liệu chung...');
         await syncAllLocalData();
         showSyncMessage('Đã đồng bộ dữ liệu chung.');
       }

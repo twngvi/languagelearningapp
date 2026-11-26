@@ -13,6 +13,7 @@ export function renderSettings() {
       <div class="backup-actions" data-sync-account>
         <button class="secondary-button" data-sync-action="sync" type="button">Đồng bộ ngay</button>
       </div>
+      <p class="notice" data-sync-message role="status" aria-live="polite" hidden></p>
     </section>
     <section class="settings-card speech-settings-card">
       <div class="section-heading"><div><p class="eyebrow">PHÁT ÂM</p><h2>Giọng đọc mặc định</h2></div></div>

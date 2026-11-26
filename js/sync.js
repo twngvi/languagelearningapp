@@ -75,6 +75,65 @@ function recordTime(value) {
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
+async function reconcileSettingsKeyConflicts(localByKey, remoteRecords, settingsStore, deleteSyncedRecord) {
+  const recordsBySettingKey = new Map();
+  const addCandidate = (settingKey, candidate) => {
+    if (!recordsBySettingKey.has(settingKey)) recordsBySettingKey.set(settingKey, []);
+    recordsBySettingKey.get(settingKey).push(candidate);
+  };
+
+  for (const { storeName, record } of localByKey.values()) {
+    if (storeName === settingsStore && record.key !== undefined && record.key !== null) {
+      addCandidate(record.key, {
+        id: record.id,
+        source: 'local',
+        updatedAt: recordTime(record.updatedAt || record.createdAt),
+      });
+    }
+  }
+  for (const remote of remoteRecords) {
+    if (remote.store_name === settingsStore
+      && !remote.deleted_at
+      && remote.record?.key !== undefined
+      && remote.record?.key !== null) {
+      addCandidate(remote.record.key, {
+        id: remote.record_id,
+        source: 'remote',
+        updatedAt: recordTime(remote.updated_at || remote.record.updatedAt || remote.record.createdAt),
+      });
+    }
+  }
+
+  const winningIds = new Map();
+  for (const [settingKey, candidates] of recordsBySettingKey) {
+    const distinctIds = new Set(candidates.map((candidate) => candidate.id));
+    if (distinctIds.size < 2) continue;
+
+    const winner = [...candidates].sort((first, second) =>
+      second.updatedAt - first.updatedAt || first.id.localeCompare(second.id))[0];
+    winningIds.set(settingKey, winner.id);
+
+    for (const candidate of candidates) {
+      if (candidate.id === winner.id) continue;
+      if (candidate.source === 'local') {
+        await deleteSyncedRecord(settingsStore, candidate.id);
+        localByKey.delete(`${settingsStore}:${candidate.id}`);
+      } else {
+        await removeRemoteRecord(settingsStore, candidate.id);
+      }
+    }
+  }
+
+  return remoteRecords.filter((remote) => {
+    if (remote.store_name !== settingsStore
+      || remote.deleted_at
+      || remote.record?.key === undefined
+      || remote.record?.key === null) return true;
+    const winningId = winningIds.get(remote.record.key);
+    return winningId === undefined || remote.record_id === winningId;
+  });
+}
+
 async function performFullSync() {
   if (!navigator.onLine) throw new Error('Thiết bị đang ngoại tuyến.');
 
@@ -91,8 +150,14 @@ async function performFullSync() {
     .select('store_name,record_id,record,updated_at,deleted_at');
   if (error) throw error;
 
+  const remoteRecords = await reconcileSettingsKeyConflicts(
+    localByKey,
+    data || [],
+    STORES.settings,
+    deleteSyncedRecord,
+  );
   const remoteByKey = new Map();
-  for (const remote of data || []) {
+  for (const remote of remoteRecords) {
     const key = `${remote.store_name}:${remote.record_id}`;
     remoteByKey.set(key, remote);
     const local = localByKey.get(key);

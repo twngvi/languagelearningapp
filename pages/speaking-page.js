@@ -42,7 +42,7 @@ export function renderSpeaking() {
     </form>
     <form class="vocabulary-form" data-sentence-bulk-form hidden>
       <div class="section-heading"><h2>Nhập hàng loạt câu</h2><button class="close-button" data-sentence-action="cancel-bulk" type="button" aria-label="Đóng biểu mẫu">×</button></div>
-      <textarea name="bulkText" rows="7" placeholder="How are you today? - Hôm nay bạn khỏe không?&#10;Could you help me, please? - Bạn có thể giúp tôi không?" required></textarea>
+      <textarea name="bulkText" rows="7" placeholder="How are you today? - Hôm nay bạn khỏe không?&#10;Could you help me, please? – Bạn có thể giúp tôi không?" required></textarea>
       <div class="form-actions sentence-bulk-form-actions"><button class="secondary-button" data-sentence-action="cancel-bulk" type="button">Hủy</button><button class="primary-button save-button" type="submit" aria-label="Xem trước và lưu" title="Xem trước và lưu"><img src="image/lưu.png" alt=""></button></div>
     </form>
     <section class="vocabulary-list-section"><div class="section-heading"><h2>Danh sách câu <span class="record-count" data-sentence-count>0</span></h2></div><div class="sentence-list" data-sentence-list><p class="empty-state">Đang tải dữ liệu...</p></div></section>

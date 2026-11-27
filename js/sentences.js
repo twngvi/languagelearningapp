@@ -56,8 +56,8 @@ export function parseBulkSentences(text) {
     .map((line, index) => ({ line: index + 1, text: line.trim() }))
     .filter(({ text }) => text)
     .map(({ line, text }) => {
-      const separator = text.match(/\s+-\s+/) || text.match(/\t+/);
-      if (!separator) return { line, error: 'Thiếu dấu phân cách “ - ” hoặc tab.' };
+      const separator = text.match(/\s+[-–]\s+/) || text.match(/\t+/);
+      if (!separator) return { line, error: 'Thiếu dấu phân cách “ - ”, “ – ” hoặc tab.' };
       const separatorIndex = separator.index;
       const english = text.slice(0, separatorIndex).trim();
       const vietnamese = text.slice(separatorIndex + separator[0].length).trim();

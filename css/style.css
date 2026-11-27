@@ -890,6 +890,48 @@ h2 {
   border-radius: 12px;
 }
 
+.sentence-selection-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 12px;
+  padding: 10px 12px;
+  background: var(--purple-soft);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.sentence-selection-toolbar[hidden] {
+  display: none;
+}
+
+.sentence-selection-toolbar > span {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sentence-selection-toolbar > button {
+  width: auto;
+  min-height: 34px;
+  padding: 7px 10px;
+}
+
+.sentence-selection-toolbar > .is-delete {
+  color: #c0415f;
+}
+
+.sentence-selection-toolbar > .is-delete:hover:not(:disabled) {
+  background: color-mix(in srgb, #c0415f 10%, white);
+}
+
+.sentence-row.is-selected {
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
+}
+
 .sentence-main {
   display: flex;
   gap: 12px;

@@ -8,7 +8,7 @@ import {
 } from './db.js';
 import { cancelSpeech, isSpeechActive, speakText, speakTextAndWait, toggleSpeech } from './speech.js';
 import { VoiceRecorder } from './recorder.js';
-import { showAlert, showConfirm } from './notifications.js';
+import { showAlert, showConfirm, showPrompt } from './notifications.js';
 import { translateEnglishWord, translateVietnameseWord } from './vocabulary.js';
 
 export const sentenceFields = ['english', 'vietnamese', 'topic', 'notes'];
@@ -101,9 +101,9 @@ function escapeHtml(value) {
   }[character]));
 }
 
-function sentenceRow(record) {
+function sentenceRow(record, { selected = false } = {}) {
   return `
-    <article class="sentence-row" data-sentence-id="${escapeHtml(record.id)}">
+    <article class="sentence-row${selected ? ' is-selected' : ''}" data-sentence-id="${escapeHtml(record.id)}">
       <div class="sentence-main">
         <div><h3>${escapeHtml(record.english)}</h3><p>${escapeHtml(record.vietnamese)}</p>${record.notes ? `<small>${escapeHtml(record.notes)}</small>` : ''}</div>
       </div>
@@ -130,8 +130,19 @@ export async function initializeSpeakingPage() {
   const list = view.querySelector('[data-sentence-list]');
   const form = view.querySelector('[data-sentence-form]');
   const bulkForm = view.querySelector('[data-sentence-bulk-form]');
+  const selectionToolbar = view.querySelector('[data-sentence-selection-toolbar]');
+  const selectedCount = view.querySelector('[data-sentence-selected-count]');
   const message = view.querySelector('[data-sentence-message]');
   let records = [];
+  const selectedSentenceIds = new Set();
+  let longPressTimer = null;
+  let longPressPointerId = null;
+  let longPressStartX = 0;
+  let longPressStartY = 0;
+  let completedLongPressPointerId = null;
+  let completedLongPressSentenceId = '';
+  let suppressedLongPressClickId = '';
+  let suppressedLongPressClickTimer = null;
   let editingId = null;
   let practice = null;
   let recorder;
@@ -159,18 +170,40 @@ export async function initializeSpeakingPage() {
     showAlert(text, { type, title: type === 'error' ? 'Không thể thực hiện' : 'Thông báo' });
   };
 
+  const getVisibleSentences = () => filterSentences(records, {
+    query: view.querySelector('[data-sentence-search]').value,
+    topic: view.querySelector('[data-sentence-filter="topic"]').value,
+    favorite: view.querySelector('[data-sentence-filter="favorite"]').checked,
+    unpracticed: view.querySelector('[data-sentence-filter="unpracticed"]').checked,
+    due: view.querySelector('[data-sentence-filter="due"]').checked,
+  });
+
+  const syncSelectionToolbar = (visibleRecords) => {
+    const count = selectedSentenceIds.size;
+    selectionToolbar.hidden = count === 0;
+    selectedCount.textContent = `${count} câu đã chọn`;
+    selectionToolbar.querySelector('[data-sentence-action="assign-topic"]').disabled = count === 0;
+    selectionToolbar.querySelector('[data-sentence-action="delete-selected"]').disabled = count === 0;
+    const allVisibleSelected = visibleRecords.length > 0
+      && visibleRecords.every((record) => selectedSentenceIds.has(record.id));
+    const selectAllButton = selectionToolbar.querySelector('[data-sentence-action="select-all"]');
+    selectAllButton.disabled = visibleRecords.length === 0;
+    selectAllButton.textContent = allVisibleSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả';
+  };
+
   const renderList = () => {
-    const visibleRecords = filterSentences(records, {
-      query: view.querySelector('[data-sentence-search]').value,
-      topic: view.querySelector('[data-sentence-filter="topic"]').value,
-      favorite: view.querySelector('[data-sentence-filter="favorite"]').checked,
-      unpracticed: view.querySelector('[data-sentence-filter="unpracticed"]').checked,
-      due: view.querySelector('[data-sentence-filter="due"]').checked,
+    const visibleRecords = getVisibleSentences();
+    const recordIds = new Set(records.map((record) => record.id));
+    selectedSentenceIds.forEach((id) => {
+      if (!recordIds.has(id)) selectedSentenceIds.delete(id);
     });
     view.querySelector('[data-sentence-count]').textContent = visibleRecords.length;
     list.innerHTML = visibleRecords.length
-      ? visibleRecords.map(sentenceRow).join('')
+      ? visibleRecords.map((record) => sentenceRow(record, {
+        selected: selectedSentenceIds.has(record.id),
+      })).join('')
       : '<p class="empty-state">Chưa có câu phù hợp. Hãy thêm một câu mới để bắt đầu.</p>';
+    syncSelectionToolbar(visibleRecords);
   };
 
   const load = async () => {
@@ -181,6 +214,85 @@ export async function initializeSpeakingPage() {
     const saved = await loadSpeakingProgress();
     view.querySelector('[data-sentence-action="resume"]').hidden = !saved?.sentenceIds?.length;
   };
+
+  const cancelLongPress = () => {
+    if (longPressTimer !== null) window.clearTimeout(longPressTimer);
+    longPressTimer = null;
+    longPressPointerId = null;
+  };
+  const clearLongPressClickSuppression = () => {
+    if (suppressedLongPressClickTimer !== null) window.clearTimeout(suppressedLongPressClickTimer);
+    suppressedLongPressClickTimer = null;
+    suppressedLongPressClickId = '';
+  };
+
+  list.addEventListener('pointerdown', (event) => {
+    clearLongPressClickSuppression();
+    if (longPressTimer !== null) cancelLongPress();
+    if (event.button !== 0 || selectedSentenceIds.size > 0) return;
+    if (event.target.closest('button, input, select, textarea, a, label, [contenteditable="true"]')) return;
+    const row = event.target.closest('.sentence-row[data-sentence-id]');
+    if (!row) return;
+
+    completedLongPressPointerId = null;
+    completedLongPressSentenceId = '';
+    longPressPointerId = event.pointerId;
+    longPressStartX = event.clientX;
+    longPressStartY = event.clientY;
+    longPressTimer = window.setTimeout(() => {
+      longPressTimer = null;
+      if (!row.isConnected || selectedSentenceIds.size > 0) {
+        longPressPointerId = null;
+        return;
+      }
+      const sentenceId = row.dataset.sentenceId;
+      selectedSentenceIds.add(sentenceId);
+      row.classList.add('is-selected');
+      completedLongPressPointerId = event.pointerId;
+      completedLongPressSentenceId = sentenceId;
+      renderList();
+    }, 500);
+  }, { passive: true });
+  list.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== longPressPointerId || longPressTimer === null) return;
+    if (Math.hypot(event.clientX - longPressStartX, event.clientY - longPressStartY) > 10) {
+      cancelLongPress();
+    }
+  }, { passive: true });
+  list.addEventListener('pointerup', (event) => {
+    const completedLongPress = completedLongPressPointerId === event.pointerId;
+    const sentenceId = completedLongPressSentenceId;
+    cancelLongPress();
+    if (!completedLongPress) return;
+
+    completedLongPressPointerId = null;
+    completedLongPressSentenceId = '';
+    suppressedLongPressClickId = sentenceId;
+    suppressedLongPressClickTimer = window.setTimeout(clearLongPressClickSuppression, 1000);
+  });
+  list.addEventListener('pointercancel', (event) => {
+    const completedLongPress = completedLongPressPointerId === event.pointerId;
+    cancelLongPress();
+    if (completedLongPress) {
+      completedLongPressPointerId = null;
+      completedLongPressSentenceId = '';
+      clearLongPressClickSuppression();
+    }
+  });
+  list.addEventListener('click', (event) => {
+    if (selectedSentenceIds.size === 0) return;
+    const row = event.target.closest('.sentence-row[data-sentence-id]');
+    if (!row) return;
+    const sentenceId = row.dataset.sentenceId;
+    if (suppressedLongPressClickId === sentenceId) {
+      clearLongPressClickSuppression();
+      return;
+    }
+    if (event.target.closest('button, input, select, textarea, a, label, [contenteditable="true"]')) return;
+    if (selectedSentenceIds.has(sentenceId)) selectedSentenceIds.delete(sentenceId);
+    else selectedSentenceIds.add(sentenceId);
+    renderList();
+  });
 
   const savePractice = async () => {
     if (!practice) return;
@@ -461,6 +573,45 @@ export async function initializeSpeakingPage() {
       }
       if (action === 'resume') {
         await beginPractice(true);
+        return;
+      }
+      if (action === 'select-all') {
+        const visibleRecords = getVisibleSentences();
+        const allVisibleSelected = visibleRecords.length > 0
+          && visibleRecords.every((item) => selectedSentenceIds.has(item.id));
+        visibleRecords.forEach((item) => {
+          if (allVisibleSelected) selectedSentenceIds.delete(item.id);
+          else selectedSentenceIds.add(item.id);
+        });
+        renderList();
+        return;
+      }
+      if (action === 'assign-topic') {
+        const selectedRecords = records.filter((item) => selectedSentenceIds.has(item.id));
+        if (!selectedRecords.length) return;
+        const topic = await showPrompt(`Nhập tên chủ đề cho ${selectedRecords.length} câu đã chọn.`, {
+          title: 'Gán chủ đề cho câu',
+          confirmLabel: 'Gán chủ đề',
+        });
+        if (!topic) return;
+        for (const item of selectedRecords) await editSentence({ ...item, topic });
+        selectedSentenceIds.clear();
+        await load();
+        showMessage(`Đã gán chủ đề "${topic}" cho ${selectedRecords.length} câu.`);
+        return;
+      }
+      if (action === 'delete-selected') {
+        const selectedRecords = records.filter((item) => selectedSentenceIds.has(item.id));
+        if (!selectedRecords.length) return;
+        if (!await showConfirm(`Xóa ${selectedRecords.length} câu đã chọn khỏi kho luyện nói?`, {
+          title: 'Xóa các câu đã chọn?',
+          confirmLabel: 'Xóa câu',
+          destructive: true,
+        })) return;
+        for (const item of selectedRecords) await removeSentence(item.id);
+        selectedSentenceIds.clear();
+        await load();
+        showMessage(`Đã xóa ${selectedRecords.length} câu.`);
         return;
       }
       if (action === 'exit-speaking') {

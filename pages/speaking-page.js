@@ -45,7 +45,16 @@ export function renderSpeaking() {
       <textarea name="bulkText" rows="7" placeholder="How are you today? - Hôm nay bạn khỏe không?&#10;Could you help me, please? – Bạn có thể giúp tôi không?" required></textarea>
       <div class="form-actions sentence-bulk-form-actions"><button class="secondary-button" data-sentence-action="cancel-bulk" type="button">Hủy</button><button class="primary-button save-button" type="submit" aria-label="Xem trước và lưu" title="Xem trước và lưu"><img src="image/lưu.png" alt=""></button></div>
     </form>
-    <section class="vocabulary-list-section"><div class="section-heading"><h2>Danh sách câu <span class="record-count" data-sentence-count>0</span></h2></div><div class="sentence-list" data-sentence-list><p class="empty-state">Đang tải dữ liệu...</p></div></section>
+    <section class="vocabulary-list-section">
+      <div class="section-heading"><h2>Danh sách câu <span class="record-count" data-sentence-count>0</span></h2></div>
+      <div class="sentence-selection-toolbar" data-sentence-selection-toolbar hidden>
+        <span data-sentence-selected-count>0 câu đã chọn</span>
+        <button class="secondary-button" data-sentence-action="select-all" type="button">Chọn tất cả</button>
+        <button class="secondary-button" data-sentence-action="assign-topic" type="button" disabled>Gán chủ đề</button>
+        <button class="secondary-button is-delete" data-sentence-action="delete-selected" type="button" disabled>Xóa đã chọn</button>
+      </div>
+      <div class="sentence-list" data-sentence-list><p class="empty-state">Đang tải dữ liệu...</p></div>
+    </section>
     </section>
   `;
 }

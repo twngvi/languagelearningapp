@@ -2919,6 +2919,11 @@ button:disabled {
   gap: 13px;
 }
 
+.sentence-bulk-topic-grid {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 12px;
+}
+
 
 
 .form-grid label {

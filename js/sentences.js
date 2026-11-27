@@ -803,7 +803,9 @@ export async function initializeSpeakingPage() {
 
   bulkForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const preview = parseBulkSentences(new FormData(bulkForm).get('bulkText'));
+    const formData = new FormData(bulkForm);
+    const preview = parseBulkSentences(formData.get('bulkText'));
+    const topic = String(formData.get('topic') || '').trim();
     const valid = preview.filter((item) => item.data);
     const invalid = preview.filter((item) => item.error);
     const duplicates = valid.filter((item) => records.some((record) => (
@@ -823,12 +825,15 @@ export async function initializeSpeakingPage() {
     const duplicateMessage = duplicates.length
       ? `\n\nCó ${duplicates.length} câu có thể đã tồn tại.`
       : '';
-    if (!await showConfirm(`Xem trước ${valid.length} câu:\n\n${previewText}${duplicateMessage}\n\nLưu các câu này vào kho luyện nói?`, {
+    const topicMessage = topic
+      ? `\n\nChủ đề áp dụng cho tất cả câu: ${topic}`
+      : '\n\nCác câu sẽ không được gán chủ đề.';
+    if (!await showConfirm(`Xem trước ${valid.length} câu:\n\n${previewText}${duplicateMessage}${topicMessage}\n\nLưu các câu này vào kho luyện nói?`, {
       title: 'Xác nhận nhập câu',
       confirmLabel: 'Lưu câu',
     })) return;
 
-    for (const item of valid) await saveSentence(item.data);
+    for (const item of valid) await saveSentence({ ...item.data, topic });
     bulkForm.reset();
     bulkForm.hidden = true;
     await load();

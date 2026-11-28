@@ -193,4 +193,5 @@ async function performFullSync() {
     if (!remoteByKey.has(key)) await upsertRemoteRecord(storeName, record);
   }
   notify('synced');
+  document.dispatchEvent(new CustomEvent('app:data-synced'));
 }

@@ -840,11 +840,20 @@ export async function initializeSpeakingPage() {
     showMessage(`Đã thêm ${valid.length} câu vào kho luyện nói.`);
   });
 
-  document.addEventListener('app:stop-activities', () => {
+  const refreshAfterSync = () => {
+    load().catch((error) => {
+      console.error('Không thể tải lại kho câu sau khi đồng bộ:', error);
+      showMessage(error.message, 'error');
+    });
+  };
+  const stopActivities = () => {
+    document.removeEventListener('app:data-synced', refreshAfterSync);
     stopAutomaticAudio();
     recorder?.discard();
     if (practice) savePractice().catch((error) => console.error('Không thể lưu tiến độ luyện nói:', error));
-  });
+  };
+  document.addEventListener('app:data-synced', refreshAfterSync);
+  document.addEventListener('app:stop-activities', stopActivities);
   view.addEventListener('click', (event) => {
     const actionElement = event.target.closest('[data-sentence-action="speak-form"]');
     if (!actionElement) return;

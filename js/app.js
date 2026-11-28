@@ -307,6 +307,9 @@ initializeAuthCallback()
   .finally(() => {
     router.start();
     syncOnResume();
+    import('./sync.js')
+      .then(({ initializeRealtimeSync }) => initializeRealtimeSync())
+      .catch((error) => console.error('Không thể khởi tạo đồng bộ realtime:', error));
   });
 
 let resumeSync;

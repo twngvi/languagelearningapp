@@ -25,12 +25,12 @@ Shin là ứng dụng học tiếng Anh cá nhân, giao diện tiếng Việt, c
 
 Ứng dụng vẫn hoạt động khi không có mạng. Dữ liệu được lưu trên thiết bị bằng bộ nhớ trình duyệt.
 
-Nếu muốn dùng chung dữ liệu trên máy tính và điện thoại:
+Để dùng cùng một bộ dữ liệu trên nhiều thiết bị:
 
-1. Chạy tệp [`supabase-schema.sql`](./supabase-schema.sql) trong Supabase SQL Editor để tạo bảng `app_records`.
-2. Mở ứng dụng trên cả hai thiết bị khi có mạng. Dữ liệu sẽ tự đồng bộ; có thể vào **Cài đặt → Đồng bộ ngay** để đồng bộ thủ công.
+1. Chạy [`supabase-schema.sql`](./supabase-schema.sql) trong Supabase SQL Editor để tạo bảng và bật Realtime cho `app_records`.
+2. Mở ứng dụng trên các thiết bị khi có mạng. Thay đổi sẽ đồng bộ tự động; có thể vào **Cài đặt → Đồng bộ ngay** để đồng bộ thủ công.
 
-Lưu ý: cấu hình hiện tại lưu dữ liệu đồng bộ thành một bộ dữ liệu chung của ứng dụng, không riêng theo tài khoản. Chỉ đồng bộ nội dung bạn chấp nhận chia sẻ với những người dùng khác của ứng dụng; không lưu thông tin riêng tư.
+Lưu ý: không cần đăng nhập, nên đây là bộ dữ liệu công khai dùng chung cho mọi người dùng ứng dụng. Người khác có thể xem, thêm, sửa hoặc xóa dữ liệu; không đồng bộ nội dung riêng tư.
 
 Bạn cũng có thể dùng **Xuất toàn bộ JSON** để sao lưu hoặc chuyển dữ liệu thủ công.
 

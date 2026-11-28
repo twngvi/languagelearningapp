@@ -14,26 +14,6 @@ alter table public.app_records
 alter table public.app_records
   alter column user_id drop not null;
 
-delete from public.app_records
-where ctid in (
-  select ctid
-  from (
-    select ctid,
-      row_number() over (
-        partition by store_name, record_id
-        order by updated_at desc nulls last, ctid desc
-      ) as duplicate_rank
-    from public.app_records
-  ) ranked
-  where duplicate_rank > 1
-);
-
-alter table public.app_records
-  drop constraint if exists app_records_pkey;
-
-alter table public.app_records
-  add primary key (store_name, record_id);
-
 alter table public.app_records enable row level security;
 
 grant select, insert, update, delete on table public.app_records to authenticated, anon;
@@ -66,3 +46,25 @@ drop policy if exists "Anyone can delete shared app records" on public.app_recor
 create policy "Anyone can delete shared app records"
   on public.app_records for delete
   using (true);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication
+    where pubname = 'supabase_realtime'
+  ) then
+    execute 'create publication supabase_realtime';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'app_records'
+  ) then
+    execute 'alter publication supabase_realtime add table public.app_records';
+  end if;
+end;
+$$;

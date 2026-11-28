@@ -20,7 +20,7 @@ export function initializeBackupPage() {
   const describeSyncError = (error) => {
     const message = String(error?.message || error || '');
     if (message.includes('app_records') || message.includes('PGRST205')) {
-      return 'Supabase đã kết nối nhưng chưa có bảng app_records. Chạy supabase-schema.sql trong SQL Editor rồi thử lại.';
+      return 'Supabase chưa có bảng app_records hoặc Realtime chưa được bật. Chạy supabase-schema.sql trong SQL Editor rồi thử lại.';
     }
     if (message === 'Failed to fetch') {
       return 'Không kết nối được Supabase. Kiểm tra URL dự án, mạng hoặc trạng thái dự án.';
@@ -107,6 +107,17 @@ export function initializeBackupPage() {
     console.error('Không thể khởi tạo đồng bộ Supabase:', error);
     showSyncMessage(describeSyncError(error), 'error');
   });
+
+  const handleSyncStatus = (event) => {
+    if (event.detail.status === 'error') {
+      showSyncMessage(describeSyncError(event.detail.detail), 'error');
+    }
+  };
+  const removeSyncStatusListener = () => {
+    document.removeEventListener('app:sync-status', handleSyncStatus);
+  };
+  document.addEventListener('app:sync-status', handleSyncStatus);
+  document.addEventListener('app:stop-activities', removeSyncStatusListener, { once: true });
 
   getDatabaseHealth()
     .then(({ version, counts }) => {
@@ -202,7 +213,11 @@ export function initializeBackupPage() {
       }
     } catch (error) {
       console.error('Không thể xử lý sao lưu:', error);
-      showMessage(action === 'sync' ? describeSyncError(error) : error.message, 'error');
+      if (action === 'sync') {
+        showSyncMessage(describeSyncError(error), 'error');
+      } else {
+        showMessage(error.message, 'error');
+      }
     }
   });
 }

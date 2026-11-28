@@ -3,6 +3,8 @@ import { supabase } from './supabase.js';
 const SYNC_TABLE = 'app_records';
 let syncTimer;
 let fullSync;
+let realtimeChannel;
+let realtimeSyncTimer;
 const pendingSyncs = new Map();
 
 function notify(status, detail = '') {
@@ -68,6 +70,43 @@ export async function syncAllLocalData() {
     fullSync = undefined;
   });
   return fullSync;
+}
+
+function scheduleRealtimeSync() {
+  if (realtimeSyncTimer) window.clearTimeout(realtimeSyncTimer);
+  realtimeSyncTimer = window.setTimeout(() => {
+    realtimeSyncTimer = undefined;
+    const syncAfterCurrent = async () => {
+      if (fullSync) await fullSync;
+      await syncAllLocalData();
+    };
+    syncAfterCurrent().catch((error) => {
+      notify('error', error.message);
+      console.error('Không thể cập nhật dữ liệu từ Supabase:', error);
+    });
+  }, 250);
+}
+
+export function initializeRealtimeSync() {
+  if (realtimeChannel) return realtimeChannel;
+
+  realtimeChannel = supabase.channel('app-records-live-sync')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: SYNC_TABLE,
+    }, scheduleRealtimeSync)
+    .subscribe((status, error) => {
+      if (status === 'SUBSCRIBED') {
+        scheduleRealtimeSync();
+      } else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) {
+        const detail = error?.message || `Supabase Realtime: ${status}`;
+        notify('error', detail);
+        console.error('Không thể kết nối Supabase Realtime:', detail);
+      }
+    });
+
+  return realtimeChannel;
 }
 
 function recordTime(value) {

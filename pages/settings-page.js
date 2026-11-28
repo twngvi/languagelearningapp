@@ -10,6 +10,7 @@ export function renderSettings() {
     </section>
     <section class="settings-card" data-sync-panel>
       <div class="section-heading"><div><p class="eyebrow">ĐỒNG BỘ THIẾT BỊ</p><h2>Dữ liệu chung</h2></div><span class="status-pill" data-sync-status>Đang kết nối</span></div>
+      <p class="form-help">Dữ liệu đồng bộ là bộ dữ liệu chung, mọi người dùng ứng dụng có thể xem và thay đổi.</p>
       <div class="backup-actions" data-sync-account>
         <button class="secondary-button" data-sync-action="sync" type="button">Đồng bộ ngay</button>
       </div>

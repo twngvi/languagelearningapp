@@ -11,11 +11,21 @@ export const STORES = Object.freeze({
 });
 
 let queueRecordSync;
+const pendingRecordSyncs = [];
 import('./sync.js').then((module) => {
   queueRecordSync = module.queueRecordSync;
+  pendingRecordSyncs.splice(0).forEach((operation) => queueRecordSync(...operation));
 }).catch((error) => {
   console.error('Không thể tải bộ đồng bộ Supabase:', error);
 });
+
+function scheduleRecordSync(...operation) {
+  if (queueRecordSync) {
+    queueRecordSync(...operation);
+    return;
+  }
+  pendingRecordSyncs.push(operation);
+}
 
 const storeNames = new Set(Object.values(STORES));
 let databasePromise;
@@ -160,7 +170,7 @@ export async function addRecord(storeName, record) {
     const transaction = database.transaction(storeName, 'readwrite');
     const request = transaction.objectStore(storeName).add(value);
     await transactionResult(transaction, request);
-    queueRecordSync?.('upsert', storeName, value);
+    scheduleRecordSync('upsert', storeName, value);
     return value;
   } catch (error) {
     throw databaseError(error, 'add', storeName);
@@ -207,7 +217,7 @@ export async function updateRecord(storeName, record) {
     const transaction = database.transaction(storeName, 'readwrite');
     const request = transaction.objectStore(storeName).put(value);
     await transactionResult(transaction, request);
-    queueRecordSync?.('upsert', storeName, value);
+    scheduleRecordSync('upsert', storeName, value);
     return value;
   } catch (error) {
     throw databaseError(error, 'update', storeName);
@@ -257,7 +267,7 @@ export async function deleteRecord(storeName, id) {
     const transaction = database.transaction(storeName, 'readwrite');
     const request = transaction.objectStore(storeName).delete(id);
     const result = await transactionResult(transaction, request);
-    queueRecordSync?.('delete', storeName, id);
+    scheduleRecordSync('delete', storeName, id);
     return result;
   } catch (error) {
     throw databaseError(error, 'delete', storeName);
@@ -293,8 +303,8 @@ export async function deleteVocabularyRecord(id) {
     };
 
     await transactionResult(transaction, request);
-    queueRecordSync?.('delete', STORES.vocabulary, id);
-    updatedSets.forEach((wordSet) => queueRecordSync?.('upsert', STORES.wordSets, wordSet));
+    scheduleRecordSync('delete', STORES.vocabulary, id);
+    updatedSets.forEach((wordSet) => scheduleRecordSync('upsert', STORES.wordSets, wordSet));
   } catch (error) {
     throw databaseError(error, 'delete', STORES.vocabulary);
   }
